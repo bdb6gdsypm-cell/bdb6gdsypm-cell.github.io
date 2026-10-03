@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<title>绑定新手机号</title>
+<style>
+* {
+margin: 0;
+padding: 0;
+box-sizing: border-box;
+font-family: system-ui, -apple-system, BlinkMacSystemFont, "PingFang SC", sans-serif;
+        }
+html, body {
+height: 100%;
+background-color: #d2d0cf;
+overflow: hidden;
+        }
+body {
+display: flex;
+flex-direction: column;
+        }
+.back-icon-wrap {
+position:absolute;
+top:48px;
+left:20px;
+        }
+.back-btn {
+width: 36px;
+height: 36px;
+border-radius: 50%;
+border: 1px solid #cccccc;
+display: flex;
+align-items: center;
+justify-content: center;
+background: #fff;
+cursor: pointer;
+        }
+.back-btn svg {
+width: 18px;
+height: 18px;
+fill: #666;
+        }
+.container{
+flex:1;
+padding: 0 32px;
+padding-top: 88px;
+        }
+.card-title {
+font-size: 36px;
+color: #ffffff;
+font-weight: 600;
+margin-bottom: 12px;
+        }
+.card-desc {
+font-size: 20px;
+color: #ffffff;
+opacity: 0.9;
+margin-bottom: 40px;
+        }
+.phone-input-wrap {
+margin-bottom: 24px;
+        }
+.phone-input {
+width: 100%;
+height: 59px;
+border-radius: 24px;
+border: none;
+font-size: 20px;
+padding: 0 24px;
+outline: none;
+background: #ffffff;
+        }
+.get-code-btn {
+width: 100%;
+height: 48px;
+border-radius: 999px;
+border: none;
+font-size: 18px;
+color: #b8b8b8;
+background: #ffffff;
+cursor: pointer;
+        }
+.get-code-btn:disabled {
+opacity: 0.7;
+        }
+/*弹窗*/
+.modal-mask {
+position: fixed;
+top: 0;
+left: 0;
+right: 0;
+bottom: 0;
+background: rgba(0,0,0,0.45);
+z-index: 200;
+display: none;
+align-items: center;
+justify-content: center;
+        }
+.modal-wrap {
+width: 280px;
+background: #fff;
+border-radius: 16px;
+overflow: hidden;
+        }
+.modal-body {
+padding: 24px 20px;
+text-align: center;
+        }
+.modal-msg-text {
+font-size:20px;
+font-weight:500;
+color:#222;
+        }
+.modal-footer {
+border-top:1px solid #eee;
+        }
+.modal-confirm-btn {
+width:100%;
+border:none;
+background:#fff;
+font-size:17px;
+color:#007aff;
+padding:14px 0;
+cursor:pointer;
+        }
+.modal-mask.show{
+display:flex;
+        }
+</style>
+</head>
+<body>
+<div class="back-icon-wrap">
+<div class="back-btn" id="backBtn">
+<svg viewBox="0 0 24 24">
+<path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z" />
+</svg>
+</div>
+</div>
+<div class="container">
+<div class="card-title">绑定新手机号</div>
+<div class="card-desc">请输入你的新手机号，点击获取验证码完成验证</div>
+<div class="phone-input-wrap">
+<input class="phone-input" id="phoneInput" placeholder="请输入手机号" maxlength="11" />
+</div>
+<button class="get-code-btn" id="getCodeBtn">获取验证码</button>
+</div>
+<div class="modal-mask" id="modalMask">
+<div class="modal-wrap">
+<div class="modal-body">
+<div class="modal-msg-text" id="modalMsg"></div>
+</div>
+<div class="modal-footer">
+<button class="modal-confirm-btn" id="modalOkBtn">确定</button>
+</div>
+</div>
+</div>
+<script>
+const phoneInput = document.getElementById('phoneInput');
+const getCodeBtn = document.getElementById('getCodeBtn');
+const modalMask = document.getElementById("modalMask");
+const modalMsg = document.getElementById("modalMsg");
+const modalOkBtn = document.getElementById("modalOkBtn");
+const backBtn = document.getElementById("backBtn");
+
+// 返回按钮跳转登录页.html
+backBtn.addEventListener('click', ()=>{
+    location.href = "登陆页.html";
+});
+
+function openModal(msg){
+modalMsg.innerText = msg;
+modalMask.classList.add("show");
+        }
+function closeModal(){
+modalMask.classList.remove("show");
+        }
+getCodeBtn.addEventListener('click', ()=>{
+const val = phoneInput.value.trim();
+if(val.length !== 11){
+openModal("手机号错误，请输入11位手机号");
+return;
+            }
+// 跳转至 pageB，把手机号放在url参数
+location.href = "验证码输入页.html?phone="+encodeURIComponent(val);
+        })
+modalOkBtn.addEventListener('click', closeModal);
+modalMask.addEventListener('click',e=>{if(e.target===modalMask) closeModal();})
+</script>
+</body>
+</html>
