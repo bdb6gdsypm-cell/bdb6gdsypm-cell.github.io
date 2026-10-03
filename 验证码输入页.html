@@ -26,10 +26,19 @@ background-color: #cccccc;
 padding: 40px 20px 10px;
         }
 .back-btn {
-width: 32px;
-height: 32px;
-fill: #aaaaaa;
+width: 36px;
+height: 36px;
+border-radius: 50%;
+background: #ffffff;
+display: flex;
+align-items: center;
+justify-content: center;
 cursor: pointer;
+        }
+.back-btn svg {
+width: 18px;
+height: 18px;
+fill: #666666;
         }
 /* 中间验证码区域 */
 .verify-section {
@@ -135,7 +144,7 @@ transition: 0.2s;
 opacity: 0.7;
 cursor: not-allowed;
         }
-/* 验证码弹窗（保留，带确定按钮） */
+/* 通用弹窗mask */
 .modal-mask {
 position: fixed;
 top: 0;
@@ -188,6 +197,61 @@ cursor:pointer;
 .modal-mask.show{
 display:flex;
         }
+/* 滑块验证弹窗 */
+.slide-modal-wrap{
+width:320px;
+background:#fff;
+border-radius:16px;
+overflow:hidden;
+}
+.slide-modal-body{
+padding:24px 20px;
+}
+.slide-title{
+text-align:center;
+font-size:18px;
+color:#222;
+margin-bottom:20px;
+}
+.slide-box{
+width:100%;
+height:44px;
+background:#e8e8e8;
+border-radius:22px;
+position:relative;
+overflow:hidden;
+touch-action:none;
+}
+.slide-progress{
+position:absolute;
+left:0;
+top:0;
+height:100%;
+background:#409eff;
+width:0%;
+}
+.slide-btn{
+width:44px;
+height:44px;
+border-radius:50%;
+background:#fff;
+box-shadow:0 0 3px #999;
+position:absolute;
+top:0;
+left:0;
+cursor:grab;
+display:flex;
+align-items:center;
+justify-content:center;
+font-weight:bold;
+user-select:none;
+}
+.slide-tip{
+text-align:center;
+margin-top:16px;
+color:#666;
+font-size:14px;
+}
 /* 校验结果提示浮窗：半透明，无按钮，自动消失 */
 .toast-mask {
 position: fixed;
@@ -220,9 +284,11 @@ display:flex;
 </head>
 <body>
 <div class="top-bar">
-<svg class="back-btn" id="backBtn" viewBox="0 0 24 24">
+<div class="back-btn" id="backBtn">
+<svg viewBox="0 0 24 24">
 <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z" />
 </svg>
+</div>
 </div>
 <div class="verify-section">
 <div class="verify-card">
@@ -251,11 +317,23 @@ display:flex;
 </div>
 </div>
 </div>
+<!-- 滑块人机验证弹窗 -->
+<div class="modal-mask" id="slideModalMask">
+<div class="slide-modal-wrap">
+<div class="slide-modal-body">
+<div class="slide-title">人机验证</div>
+<div class="slide-box" id="slideBox">
+<div class="slide-progress" id="slideProgress"></div>
+<div class="slide-btn" id="slideBtn">→</div>
+</div>
+<div class="slide-tip" id="slideTip">请拖动滑块完成验证</div>
+</div>
+</div>
+</div>
 <!-- 结果toast浮窗，3秒自动消失 -->
 <div class="toast-mask" id="toastMask">
 <div class="toast-box" id="toastText"></div>
 </div>
-
 <script>
 //读取url参数拿到手机号
 const urlParams = new URLSearchParams(location.search);
@@ -270,97 +348,145 @@ const modalTitle = document.getElementById("modalTitle");
 const modalCodeVal = document.getElementById("modalCodeVal");
 const modalTip = document.getElementById("modalTip");
 const modalOkBtn = document.getElementById("modalOkBtn");
+//滑块验证
+const slideModalMask = document.getElementById("slideModalMask");
+const slideBox = document.getElementById("slideBox");
+const slideBtn = document.getElementById("slideBtn");
+const slideProgress = document.getElementById("slideProgress");
+const slideTip = document.getElementById("slideTip");
+let slideVerified = false;
+let isDrag = false;
+let maxW = 0; // 最大拖动距离，打开弹窗后再计算
 //toast浮窗
 const toastMask = document.getElementById("toastMask");
 const toastText = document.getElementById("toastText");
-
 let codeArr = ["", "", "", ""];
 let pos = 0;
-let count = 60;
 let timer = null;
 let realVerifyCode = "";
 let codeGenerateTime = 0;
 let codeIsUsed = false; //标记验证码是否已经使用成功一次
-
+// 存储key：按手机号区分，不同手机号独立计数
+const STORAGE_KEY = "sms_send_records_" + phone;
+const CODE_CACHE_KEY = "current_code_" + phone;
+const ONE_HOUR = 60 * 60 * 1000;
+const CODE_EXPIRE = 2 * 60 * 1000; //验证码2分钟有效期
+// 获取一小时内的发送记录
+function getSmsRecords() {
+const raw = localStorage.getItem(STORAGE_KEY);
+let list = raw ? JSON.parse(raw) : [];
+const now = Date.now();
+// 过滤掉超过1小时的记录
+list = list.filter(ts => now - ts < ONE_HOUR);
+localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
+return list;
+}
+// 添加本次发送记录
+function addSmsRecord() {
+const list = getSmsRecords();
+list.push(Date.now());
+localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
+}
+// 缓存验证码 + 倒计时信息 + 首次跳转标记
+function saveCodeCache(code, time, used, countStartTs, totalSec, isFirstJump){
+const cacheData = {
+code: code,
+generateTime: time,
+used: used,
+countStartTs: countStartTs,
+totalSec: totalSec,
+isFirstJump: isFirstJump
+    }
+localStorage.setItem(CODE_CACHE_KEY, JSON.stringify(cacheData));
+}
+//读取缓存验证码
+function getCodeCache(){
+const raw = localStorage.getItem(CODE_CACHE_KEY);
+if(!raw) return null;
+const obj = JSON.parse(raw);
+const now = Date.now();
+//超过2分钟验证码失效，清空缓存
+if(now - obj.generateTime > CODE_EXPIRE){
+localStorage.removeItem(CODE_CACHE_KEY);
+return null;
+    }
+return obj;
+}
 tipText.innerText = "验证码已发送至 +86 " + phone;
-
 // 更新格子显示+光标位置
 function renderCode(){
-    boxes.forEach((box,idx)=>{
-        box.innerText = codeArr[idx] || "";
-        box.classList.remove("active");
+boxes.forEach((box,idx)=>{
+box.innerText = codeArr[idx] || "";
+box.classList.remove("active");
     })
-    // 只有点击格子激活后，才展示active闪烁光标
 }
 // 只给指定索引格子触发粉色闪光特效
 function triggerFlash(index){
-    const box = boxes[index];
-    box.classList.remove('flash');
-    void box.offsetWidth;
-    box.classList.add('flash');
+const box = boxes[index];
+box.classList.remove('flash');
+void box.offsetWidth;
+box.classList.add('flash');
 }
 // 点击验证码格子，唤起原生键盘
 boxes.forEach(box=>{
-    box.addEventListener('click',()=>{
-        hiddenInput.focus();
-        if(pos<4) boxes[pos].classList.add("active");
+box.addEventListener('click',()=>{
+hiddenInput.focus();
+if(pos<4) boxes[pos].classList.add("active");
     })
 })
 //监听隐藏输入框输入
 hiddenInput.addEventListener('input',(e)=>{
-    let val = e.target.value.replace(/\D/g,'').slice(0,4); //只保留数字，最多4位
-    //填充数组
-    codeArr = ["","","",""];
-    for(let i=0;i<val.length;i++){
-        codeArr[i] = val[i];
-        triggerFlash(i); //当前输入位单独动画
+let val = e.target.value.replace(/\D/g,'').slice(0,4);
+codeArr = ["","","",""];
+for(let i=0;i<val.length;i++){
+codeArr[i] = val[i];
+triggerFlash(i);
     }
-    pos = val.length;
-    renderCode();
-    if(hiddenInput.matches(':focus') && pos<4){
-        boxes[pos].classList.add("active");
+pos = val.length;
+renderCode();
+if(hiddenInput.matches(':focus') && pos<4){
+boxes[pos].classList.add("active");
     }
-    //输入满4位自动校验
-    if(pos >=4){
-        hiddenInput.blur();
-        const inputCode = codeArr.join("");
-        const now = Date.now();
-        const twoMinute = 2 * 60 * 1000;
-
-        if(codeIsUsed){
-            showToast("当前验证码已失效请重新获取");
+//输入满4位自动校验
+if(pos >=4){
+hiddenInput.blur();
+const inputCode = codeArr.join("");
+const now = Date.now();
+const twoMinute = 2 * 60 * 1000;
+if(codeIsUsed){
+showToast("当前验证码已失效请重新获取");
         }else if(inputCode === realVerifyCode){
-            if(now - codeGenerateTime > twoMinute){
-                showToast("当前验证码已失效请重新获取");
+if(now - codeGenerateTime > twoMinute){
+showToast("当前验证码已失效请重新获取");
             }else{
-                showToast(`欢迎回来 ${phone}`);
-                codeIsUsed = true;
+showToast(`欢迎回来 ${phone}`);
+codeIsUsed = true;
+saveCodeCache(realVerifyCode, codeGenerateTime, codeIsUsed, Date.now(), 60, false);
             }
         }else{
-            showToast("验证码错误");
-            //清空
-            codeArr = ["","","",""];
-            pos =0;
-            hiddenInput.value = "";
-            renderCode();
+showToast("验证码错误");
+codeArr = ["","","",""];
+pos =0;
+hiddenInput.value = "";
+renderCode();
         }
     }
 })
 //退格处理
 hiddenInput.addEventListener('keydown',(e)=>{
-    if(e.key === 'Backspace'){
-        if(pos>0){
-            pos--;
-            codeArr[pos] = "";
-            triggerFlash(pos); //删除时，当前格子动画
-            renderCode();
-            if(hiddenInput.matches(':focus') && pos<4){
-                boxes[pos].classList.add("active");
+if(e.key === 'Backspace'){
+if(pos>0){
+pos--;
+codeArr[pos] = "";
+triggerFlash(pos);
+renderCode();
+if(hiddenInput.matches(':focus') && pos<4){
+boxes[pos].classList.add("active");
             }
         }
     }
 })
-//打开验证码弹窗（带确定按钮）
+//打开普通弹窗
 function openModal(type, codeText=""){
 modalTitle.innerText = "";
 modalCodeVal.innerText = "";
@@ -375,6 +501,23 @@ modalMask.classList.add("show");
 function closeModal(){
 modalMask.classList.remove("show");
         }
+//打开滑块弹窗【修复重点：打开弹窗后再计算宽度】
+function openSlideModal(){
+slideVerified = false;
+slideBtn.style.left = "0px";
+slideProgress.style.width = "0%";
+slideTip.textContent = "请拖动滑块完成验证";
+slideTip.style.color="#666";
+slideBtn.style.background="#fff";
+slideModalMask.classList.add("show");
+// 弹窗显示后，再获取滑块盒子尺寸
+setTimeout(()=>{
+maxW = slideBox.clientWidth - slideBtn.offsetWidth;
+},10)
+}
+function closeSlideModal(){
+slideModalMask.classList.remove("show");
+}
 //toast提示：半透明，3秒自动消失
 function showToast(msg){
 toastText.innerText = msg;
@@ -386,58 +529,169 @@ toastMask.classList.remove("show");
 // 生成4位随机数字验证码
 function generate4Code() {
 return String(Math.floor(1000 + Math.random() * 9000));
-        }
-function startCountdown() {
-count = 60;
-resendBtn.disabled = true;
-resendBtn.innerText = `重新获取 (${count})`;
+}
+/**
+ * 支持断点续倒计时
+ * startTs: 倒计时开始时间戳
+ * totalSeconds: 总秒数(60/120)
+ */
+function startCountdown(startTs, totalSeconds) {
 clearInterval(timer);
-timer = setInterval(() => {
-count--;
-resendBtn.innerText = `重新获取 (${count})`;
-if (count <= 0) {
+const now = Date.now();
+const elapsed = Math.floor((now - startTs)/1000);
+let remain = totalSeconds - elapsed;
+if(remain <=0){
+resendBtn.disabled = false;
+resendBtn.innerText = "获取验证码";
+return;
+    }
+resendBtn.disabled = true;
+resendBtn.innerText = `重新获取 (${remain})`;
+timer = setInterval(()=>{
+remain--;
+resendBtn.innerText = `重新获取 (${remain})`;
+if(remain <=0){
 clearInterval(timer);
 resendBtn.disabled = false;
 resendBtn.innerText = "获取验证码";
-                }
-            }, 1000);
         }
-//页面加载自动生成验证码
+    },1000);
+}
+// ==========页面初始化逻辑==========
+const initRecords = getSmsRecords();
+const cacheCode = getCodeCache();
+if(cacheCode){
+// 存在缓存 = 刷新页面，复用旧验证码，续倒计时，**不自动弹窗**
+realVerifyCode = cacheCode.code;
+codeGenerateTime = cacheCode.generateTime;
+codeIsUsed = cacheCode.used;
+console.log("复用缓存验证码：", realVerifyCode);
+startCountdown(cacheCode.countStartTs, cacheCode.totalSec);
+}else{
+// 无缓存：第一次从手机号页面跳转进来，弹窗，标记首次跳转
 realVerifyCode = generate4Code();
 codeGenerateTime = Date.now();
 codeIsUsed = false;
-console.log("验证码：", realVerifyCode);
+const totalSec = initRecords.length >5 ? 120 :60;
+const countStartTs = Date.now();
+saveCodeCache(realVerifyCode, codeGenerateTime, codeIsUsed, countStartTs, totalSec, false);
+console.log("新生成验证码：", realVerifyCode);
+addSmsRecord(); //仅首次跳转才计入发送次数
+startCountdown(countStartTs, totalSec);
 openModal("code", realVerifyCode);
-startCountdown();
-renderCode(); //初始渲染，不激活光标！
+}
+renderCode();
 // 返回按钮，跳回手机号页面
 backBtn.addEventListener('click',()=>{
 location.href = "手机号输入页.html";
-        })
-// 点击【重新获取】
-resendBtn.addEventListener('click', ()=>{
-if(!resendBtn.disabled){
+})
+// ========== 滑块拖拽逻辑 ==========
+slideBtn.addEventListener('mousedown',(e)=>{
+isDrag = true;
+e.preventDefault();
+})
+document.addEventListener('mousemove',(e)=>{
+if(!isDrag) return;
+const rect = slideBox.getBoundingClientRect();
+let x = e.clientX - rect.left - slideBtn.offsetWidth/2;
+if(x <0) x=0;
+if(x>maxW) x = maxW;
+slideBtn.style.left = x + "px";
+let percent = (x/maxW)*100;
+slideProgress.style.width = percent+"%";
+})
+document.addEventListener('mouseup',()=>{
+if(!isDrag) return;
+isDrag = false;
+const leftVal = parseInt(slideBtn.style.left);
+if(leftVal >= maxW*0.9){
+slideVerified = true;
+slideTip.textContent = "验证成功";
+slideTip.style.color="#00c48c";
+slideBtn.style.background="#00c48c";
+setTimeout(()=>{
+closeSlideModal();
+doSendCode();
+},600)
+}else{
+slideBtn.style.left = "0px";
+slideProgress.style.width = "0%";
+slideTip.textContent = "验证失败，请重试";
+slideTip.style.color="#f56c6c";
+}
+})
+//移动端触摸
+slideBtn.addEventListener('touchstart',(e)=>{
+isDrag = true;
+})
+document.addEventListener('touchmove',(e)=>{
+if(!isDrag) return;
+e.preventDefault();
+const rect = slideBox.getBoundingClientRect();
+let x = e.touches[0].clientX - rect.left - slideBtn.offsetWidth/2;
+if(x <0) x=0;
+if(x>maxW) x = maxW;
+slideBtn.style.left = x + "px";
+let percent = (x/maxW)*100;
+slideProgress.style.width = percent+"%";
+},{passive:false})
+document.addEventListener('touchend',()=>{
+if(!isDrag) return;
+isDrag = false;
+const leftVal = parseInt(slideBtn.style.left);
+if(leftVal >= maxW*0.9){
+slideVerified = true;
+slideTip.textContent = "验证成功";
+slideTip.style.color="#00c48c";
+slideBtn.style.background="#00c48c";
+setTimeout(()=>{
+closeSlideModal();
+doSendCode();
+},600)
+}else{
+slideBtn.style.left = "0px";
+slideProgress.style.width = "0%";
+slideTip.textContent = "验证失败，请重试";
+slideTip.style.color="#f56c6c";
+}
+})
+//执行发送验证码逻辑
+function doSendCode(){
+const records = getSmsRecords();
 realVerifyCode = generate4Code();
 codeGenerateTime = Date.now();
 codeIsUsed = false;
+const totalSec = records.length >5 ?120:60;
+const countStartTs = Date.now();
+saveCodeCache(realVerifyCode, codeGenerateTime, codeIsUsed, countStartTs, totalSec, false);
 openModal("code", realVerifyCode);
 console.log("重发验证码：",realVerifyCode);
+addSmsRecord();
 codeArr = ["","","",""];
 pos=0;
 hiddenInput.value = "";
-hiddenInput.blur(); // 关键：重置后取消焦点，不唤起键盘
+hiddenInput.blur();
 renderCode();
-            }
-        })
+startCountdown(countStartTs, totalSec);
+}
+// 点击【重新获取】
+resendBtn.addEventListener('click', ()=>{
+if(resendBtn.disabled) return;
+const records = getSmsRecords();
+if(records.length >=3){
+openSlideModal();
+return;
+}
+doSendCode();
+})
 modalOkBtn.addEventListener('click', closeModal);
 modalMask.addEventListener('click',function(e){
 if(e.target === modalMask){
 closeModal();
             }
         })
-// 输入框失去焦点，清除active闪烁光标
 hiddenInput.addEventListener("blur", ()=>{
-    boxes.forEach(box => box.classList.remove("active"));
+boxes.forEach(box => box.classList.remove("active"));
 })
 </script>
 </body>
