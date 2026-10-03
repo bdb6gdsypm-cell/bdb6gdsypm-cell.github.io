@@ -75,16 +75,14 @@ gap: 16px;
 margin-bottom: 28px;
 position:relative;
         }
-/* 隐藏真实输入框，用来唤起原生键盘 */
+/* ===== 修复：移出屏幕而不是透明1px ===== */
 #hiddenInput{
 position:absolute;
-opacity:0;
-width:1px;
-height:1px;
+left:-9999px;
+top:0;
+width:120px;
+height:44px;
 z-index:-1;
-inputmode:numeric;
-maxlength:4;
-autocomplete="one-time-code";
 }
 .code-item {
 flex: 1;
@@ -295,7 +293,7 @@ display:flex;
 <div class="title-text">输入验证码</div>
 <div class="tip-text" id="tipText"></div>
 <div class="code-box-container">
-<input id="hiddenInput" inputmode="numeric" maxlength="4" autocomplete="one-time-code">
+<input id="hiddenInput" type="text" inputmode="numeric" maxlength="4" autocomplete="one-time-code">
 <div class="code-item"></div>
 <div class="code-item"></div>
 <div class="code-item"></div>
@@ -434,43 +432,56 @@ hiddenInput.focus();
 if(pos<4) boxes[pos].classList.add("active");
     })
 })
-//监听隐藏输入框输入
+// ==========【修复后的输入监听】==========
 hiddenInput.addEventListener('input',(e)=>{
-let val = e.target.value.replace(/\D/g,'').slice(0,4);
-codeArr = ["","","",""];
-for(let i=0;i<val.length;i++){
-codeArr[i] = val[i];
-triggerFlash(i);
+    let val = e.target.value.replace(/\D/g, '').slice(0,4);
+    e.target.value = val;
+    // 强制光标到末尾
+    setTimeout(()=>{
+        hiddenInput.setSelectionRange(val.length, val.length);
+    },0);
+
+    codeArr = ["","","",""];
+    for(let i=0; i<val.length; i++){
+        codeArr[i] = val[i];
+        triggerFlash(i);
     }
-pos = val.length;
-renderCode();
-if(hiddenInput.matches(':focus') && pos<4){
-boxes[pos].classList.add("active");
+    pos = val.length;
+    renderCode();
+
+    if(hiddenInput.matches(':focus') && pos<4){
+        boxes[pos].classList.add("active");
     }
-//输入满4位自动校验
-if(pos >=4){
-hiddenInput.blur();
-const inputCode = codeArr.join("");
-const now = Date.now();
-const twoMinute = 2 * 60 * 1000;
-if(codeIsUsed){
-showToast("当前验证码已失效请重新获取");
+    //输入满4位自动校验
+    if(pos >=4){
+        hiddenInput.blur();
+        const inputCode = codeArr.join("");
+        const now = Date.now();
+        const twoMinute = 2 * 60 * 1000;
+        if(codeIsUsed){
+            showToast("当前验证码已失效请重新获取");
         }else if(inputCode === realVerifyCode){
-if(now - codeGenerateTime > twoMinute){
-showToast("当前验证码已失效请重新获取");
+            if(now - codeGenerateTime > twoMinute){
+                showToast("当前验证码已失效请重新获取");
             }else{
-showToast(`欢迎回来 ${phone}`);
-codeIsUsed = true;
-saveCodeCache(realVerifyCode, codeGenerateTime, codeIsUsed, Date.now(), 60, false);
+                showToast(`欢迎回来 ${phone}`);
+                codeIsUsed = true;
+                saveCodeCache(realVerifyCode, codeGenerateTime, codeIsUsed, Date.now(), 60, false);
             }
         }else{
-showToast("验证码错误");
-codeArr = ["","","",""];
-pos =0;
-hiddenInput.value = "";
-renderCode();
+            showToast("验证码错误");
+            codeArr = ["","","",""];
+            pos =0;
+            hiddenInput.value = "";
+            renderCode();
         }
     }
+})
+// 聚焦时自动把光标放到末尾
+hiddenInput.addEventListener("focus", ()=>{
+    setTimeout(()=>{
+        hiddenInput.setSelectionRange(hiddenInput.value.length, hiddenInput.value.length);
+    },0)
 })
 //退格处理
 hiddenInput.addEventListener('keydown',(e)=>{
