@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<title>验证码登录</title>
+<style>
+* {
+margin: 0;
+padding: 0;
+box-sizing: border-box;
+font-family: system-ui, -apple-system, BlinkMacSystemFont, "PingFang SC", sans-serif;
+        }
+html, body {
+height: 100%;
+background-color: #cccccc;
+overflow: hidden;
+        }
+body {
+display: flex;
+flex-direction: column;
+        }
+/* 顶部返回 */
+.top-bar {
+background-color: #cccccc;
+padding: 40px 20px 10px;
+        }
+.back-btn {
+width: 32px;
+height: 32px;
+fill: #aaaaaa;
+cursor: pointer;
+        }
+/* 中间验证码区域 */
+.verify-section {
+flex: 1;
+display: flex;
+align-items: flex-start;
+justify-content: center;
+background-color: #cccccc;
+padding: 0 24px;
+margin-top: -4px;
+        }
+.verify-card {
+width: 100%;
+max-width: 420px;
+background: #cccccc;
+padding: 18px 24px;
+        }
+.title-text {
+font-size: 34px;
+font-weight: 500;
+color: #ffffff;
+margin-bottom: 8px;
+        }
+.tip-text {
+font-size: 18px;
+color: #ffffff;
+opacity: 0.85;
+margin-bottom: 28px;
+        }
+/* 验证码输入框容器 */
+.code-box-container {
+display: flex;
+gap: 16px;
+margin-bottom: 28px;
+position:relative;
+        }
+/* 隐藏真实输入框，用来唤起原生键盘 */
+#hiddenInput{
+position:absolute;
+opacity:0;
+width:1px;
+height:1px;
+z-index:-1;
+inputmode:numeric;
+maxlength:4;
+autocomplete="one-time-code";
+}
+.code-item {
+flex: 1;
+aspect-ratio: 1 / 1;
+background: #ffffff;
+border: 3px solid #fff;
+border-radius: 20px;
+display: flex;
+align-items: center;
+justify-content: center;
+font-size: 32px;
+font-weight: 600;
+color: #222;
+position: relative;
+cursor: pointer;
+transition: 0.2s;
+        }
+/* 仅当前格子触发粉色闪光动画 */
+.code-item.flash {
+animation: flashPink 0.25s ease-out;
+}
+@keyframes flashPink {
+0% {
+border-color: #ffb8d2;
+transform: scale(1.06);
+}
+100% {
+border-color: #ffffff;
+transform: scale(1);
+}
+}
+.code-item.active::after {
+content: "";
+position: absolute;
+width: 2px;
+height: 32px;
+background: #999;
+animation: blink 1s infinite;
+        }
+@keyframes blink {
+0%, 100% { opacity: 1; }
+50% { opacity: 0; }
+        }
+/* 重新获取按钮 */
+.resend-btn {
+width: 100%;
+padding: 18px;
+border-radius: 999px;
+border: none;
+font-size: 20px;
+color: #aaaaaa;
+background: #ffffff;
+cursor: pointer;
+transition: 0.2s;
+        }
+.resend-btn:disabled {
+opacity: 0.7;
+cursor: not-allowed;
+        }
+/* 验证码弹窗（保留，带确定按钮） */
+.modal-mask {
+position: fixed;
+top: 0;
+left: 0;
+right: 0;
+bottom: 0;
+background: rgba(0,0,0,0.45);
+z-index: 200;
+display: none;
+align-items: center;
+justify-content: center;
+        }
+.modal-wrap {
+width: 280px;
+background: #fff;border-radius: 16px;
+overflow: hidden;
+        }
+.modal-body {
+padding: 24px 20px;
+text-align: center;
+        }
+.modal-title {
+font-size:17px;
+color:#333;
+margin-bottom:12px;
+        }
+.modal-code-text {
+font-size:32px;
+letter-spacing:8px;
+font-weight:bold;
+color:#222;
+        }
+.modal-tip-text {
+font-size:16px;
+color:#ff78a1;
+margin-top:10px;
+}
+.modal-footer {
+border-top:1px solid #eee;
+        }
+.modal-confirm-btn {
+width:100%;
+border:none;
+background:#fff;
+font-size:17px;
+color:#007aff;
+padding:14px 0;
+cursor:pointer;
+        }
+.modal-mask.show{
+display:flex;
+        }
+/* 校验结果提示浮窗：半透明，无按钮，自动消失 */
+.toast-mask {
+position: fixed;
+top: 0;
+left: 0;
+right: 0;
+bottom: 0;
+z-index: 300;
+display: none;
+align-items: center;
+justify-content: center;
+pointer-events: none;
+}
+.toast-box {
+background:rgba(0,0,0,0.65);
+color:#fff;
+padding:16px 28px;
+border-radius:12px;
+font-size:18px;
+animation:toastFade 0.3s ease;
+}
+@keyframes toastFade{
+from{opacity:0;transform:scale(0.9);}
+to{opacity:1;transform:scale(1);}
+}
+.toast-mask.show{
+display:flex;
+}
+</style>
+</head>
+<body>
+<div class="top-bar">
+<svg class="back-btn" id="backBtn" viewBox="0 0 24 24">
+<path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z" />
+</svg>
+</div>
+<div class="verify-section">
+<div class="verify-card">
+<div class="title-text">输入验证码</div>
+<div class="tip-text" id="tipText"></div>
+<div class="code-box-container">
+<input id="hiddenInput" inputmode="numeric" maxlength="4" autocomplete="one-time-code">
+<div class="code-item"></div>
+<div class="code-item"></div>
+<div class="code-item"></div>
+<div class="code-item"></div>
+</div>
+<button class="resend-btn" id="resendBtn">获取验证码</button>
+</div>
+</div>
+<!-- 验证码弹窗（带确定按钮） -->
+<div class="modal-mask" id="modalMask">
+<div class="modal-wrap">
+<div class="modal-body">
+<div class="modal-title" id="modalTitle"></div>
+<div class="modal-code-text" id="modalCodeVal"></div>
+<div class="modal-tip-text" id="modalTip"></div>
+</div>
+<div class="modal-footer">
+<button class="modal-confirm-btn" id="modalOkBtn">确定</button>
+</div>
+</div>
+</div>
+<!-- 结果toast浮窗，3秒自动消失 -->
+<div class="toast-mask" id="toastMask">
+<div class="toast-box" id="toastText"></div>
+</div>
+
+<script>
+//读取url参数拿到手机号
+const urlParams = new URLSearchParams(location.search);
+const phone = urlParams.get('phone') || '';
+const boxes = document.querySelectorAll(".code-item");
+const hiddenInput = document.getElementById('hiddenInput');
+const resendBtn = document.getElementById("resendBtn");
+const tipText = document.querySelector(".tip-text");
+const backBtn = document.getElementById("backBtn");
+const modalMask = document.getElementById("modalMask");
+const modalTitle = document.getElementById("modalTitle");
+const modalCodeVal = document.getElementById("modalCodeVal");
+const modalTip = document.getElementById("modalTip");
+const modalOkBtn = document.getElementById("modalOkBtn");
+//toast浮窗
+const toastMask = document.getElementById("toastMask");
+const toastText = document.getElementById("toastText");
+
+let codeArr = ["", "", "", ""];
+let pos = 0;
+let count = 60;
+let timer = null;
+let realVerifyCode = "";
+let codeGenerateTime = 0;
+let codeIsUsed = false; //标记验证码是否已经使用成功一次
+
+tipText.innerText = "验证码已发送至 +86 " + phone;
+
+// 更新格子显示+光标位置
+function renderCode(){
+    boxes.forEach((box,idx)=>{
+        box.innerText = codeArr[idx] || "";
+        box.classList.remove("active");
+    })
+    // 只有点击格子激活后，才展示active闪烁光标
+}
+// 只给指定索引格子触发粉色闪光特效
+function triggerFlash(index){
+    const box = boxes[index];
+    box.classList.remove('flash');
+    void box.offsetWidth;
+    box.classList.add('flash');
+}
+// 点击验证码格子，唤起原生键盘
+boxes.forEach(box=>{
+    box.addEventListener('click',()=>{
+        hiddenInput.focus();
+        if(pos<4) boxes[pos].classList.add("active");
+    })
+})
+//监听隐藏输入框输入
+hiddenInput.addEventListener('input',(e)=>{
+    let val = e.target.value.replace(/\D/g,'').slice(0,4); //只保留数字，最多4位
+    //填充数组
+    codeArr = ["","","",""];
+    for(let i=0;i<val.length;i++){
+        codeArr[i] = val[i];
+        triggerFlash(i); //当前输入位单独动画
+    }
+    pos = val.length;
+    renderCode();
+    if(hiddenInput.matches(':focus') && pos<4){
+        boxes[pos].classList.add("active");
+    }
+    //输入满4位自动校验
+    if(pos >=4){
+        hiddenInput.blur();
+        const inputCode = codeArr.join("");
+        const now = Date.now();
+        const twoMinute = 2 * 60 * 1000;
+
+        if(codeIsUsed){
+            showToast("当前验证码已失效请重新获取");
+        }else if(inputCode === realVerifyCode){
+            if(now - codeGenerateTime > twoMinute){
+                showToast("当前验证码已失效请重新获取");
+            }else{
+                showToast(`欢迎回来 ${phone}`);
+                codeIsUsed = true;
+            }
+        }else{
+            showToast("验证码错误");
+            //清空
+            codeArr = ["","","",""];
+            pos =0;
+            hiddenInput.value = "";
+            renderCode();
+        }
+    }
+})
+//退格处理
+hiddenInput.addEventListener('keydown',(e)=>{
+    if(e.key === 'Backspace'){
+        if(pos>0){
+            pos--;
+            codeArr[pos] = "";
+            triggerFlash(pos); //删除时，当前格子动画
+            renderCode();
+            if(hiddenInput.matches(':focus') && pos<4){
+                boxes[pos].classList.add("active");
+            }
+        }
+    }
+})
+//打开验证码弹窗（带确定按钮）
+function openModal(type, codeText=""){
+modalTitle.innerText = "";
+modalCodeVal.innerText = "";
+modalTip.innerText = "";
+if(type === "code"){
+modalTitle.innerText = "您的本次验证码";
+modalCodeVal.innerText = codeText;
+modalTip.innerText = "请在2分钟内完成验证";
+            }
+modalMask.classList.add("show");
+        }
+function closeModal(){
+modalMask.classList.remove("show");
+        }
+//toast提示：半透明，3秒自动消失
+function showToast(msg){
+toastText.innerText = msg;
+toastMask.classList.add("show");
+setTimeout(()=>{
+toastMask.classList.remove("show");
+},3000);
+}
+// 生成4位随机数字验证码
+function generate4Code() {
+return String(Math.floor(1000 + Math.random() * 9000));
+        }
+function startCountdown() {
+count = 60;
+resendBtn.disabled = true;
+resendBtn.innerText = `重新获取 (${count})`;
+clearInterval(timer);
+timer = setInterval(() => {
+count--;
+resendBtn.innerText = `重新获取 (${count})`;
+if (count <= 0) {
+clearInterval(timer);
+resendBtn.disabled = false;
+resendBtn.innerText = "获取验证码";
+                }
+            }, 1000);
+        }
+//页面加载自动生成验证码
+realVerifyCode = generate4Code();
+codeGenerateTime = Date.now();
+codeIsUsed = false;
+console.log("验证码：", realVerifyCode);
+openModal("code", realVerifyCode);
+startCountdown();
+renderCode(); //初始渲染，不激活光标！
+// 返回按钮，跳回手机号页面
+backBtn.addEventListener('click',()=>{
+location.href = "手机号输入页.html";
+        })
+// 点击【重新获取】
+resendBtn.addEventListener('click', ()=>{
+if(!resendBtn.disabled){
+realVerifyCode = generate4Code();
+codeGenerateTime = Date.now();
+codeIsUsed = false;
+openModal("code", realVerifyCode);
+console.log("重发验证码：",realVerifyCode);
+codeArr = ["","","",""];
+pos=0;
+hiddenInput.value = "";
+hiddenInput.blur(); // 关键：重置后取消焦点，不唤起键盘
+renderCode();
+            }
+        })
+modalOkBtn.addEventListener('click', closeModal);
+modalMask.addEventListener('click',function(e){
+if(e.target === modalMask){
+closeModal();
+            }
+        })
+// 输入框失去焦点，清除active闪烁光标
+hiddenInput.addEventListener("blur", ()=>{
+    boxes.forEach(box => box.classList.remove("active"));
+})
+</script>
+</body>
+</html>
