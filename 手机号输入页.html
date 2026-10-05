@@ -14,16 +14,18 @@ font-family: system-ui, -apple-system, BlinkMacSystemFont, "PingFang SC", sans-s
 html, body {
 height: 100%;
 background-color: #d2d0cf;
-overflow: hidden;
+overflow-x: hidden;
         }
 body {
 display: flex;
 flex-direction: column;
         }
+/* 返回按钮：绝对定位，脱离文档流，不会挤压/覆盖下方页面内容 */
 .back-icon-wrap {
 position:absolute;
-top:48px;
+top:40px;
 left:20px;
+z-index: 10;
         }
 .back-btn {
 width: 36px;
@@ -44,38 +46,43 @@ fill: #666;
 .container{
 flex:1;
 padding: 0 32px;
-padding-top: 88px;
+padding-top: 100px; /* 增加顶部内边距，避开左上角返回按钮区域 */
         }
 .card-title {
-font-size: 36px;
+font-size: clamp(24px,5vw,36px); /* 动态等比例字号 */
 color: #ffffff;
 font-weight: 600;
 margin-bottom: 12px;
         }
 .card-desc {
-font-size: 20px;
+font-size: clamp(14px,3vw,20px);
 color: #ffffff;
 opacity: 0.9;
 margin-bottom: 40px;
+white-space: nowrap; /* 强制单行 */
+overflow: hidden;
+text-overflow: ellipsis;
         }
 .phone-input-wrap {
 margin-bottom: 24px;
 display:flex;
 gap:12px;
 align-items:center;
-        }
-/* ========== 自定义国家码下拉 ========== */
+width:100%;
+}
+/* ========== 自定义国家码下拉 | 圆角8px ========== */
 .country-code-wrap{
 position:relative;
 min-width:110px;
 height:59px;
+flex-shrink:0;
 }
 .country-display {
 width:100%;
 height: 59px;
 padding:0 12px;
 padding-right:30px;
-border-radius:24px;
+border-radius:8px;
 background:#fff;
 font-size:20px;
 color:#222;
@@ -90,11 +97,12 @@ content:"▼";
 position:absolute;
 top:50%;
 transform:translateY(-50%);
-right:20px;
+right:12px;
 font-size:14px;
 color:#666;
 pointer-events:none;
 }
+/* ========== 重点修改：下拉框4个圆角 + 滚动条动态显示 ========== */
 .country-dropdown{
 position:absolute;
 top:62px;
@@ -103,13 +111,31 @@ width:240px;
 max-height:420px;
 overflow-y:auto;
 background:#fff;
-border-radius:16px;
+border-radius:16px; /* 四角圆弧 */
 box-shadow:0 4px 12px rgba(0,0,0,0.12);
 display:none;
 z-index:99;
+/* 滚动条基础 */
+scrollbar-width: thin;
+scrollbar-color: #ccc transparent;
 }
 .country-dropdown.show{
 display:block;
+}
+/* 滚动条样式 Webkit */
+.country-dropdown::-webkit-scrollbar {
+width: 6px;
+}
+.country-dropdown::-webkit-scrollbar-track {
+background: transparent;
+}
+.country-dropdown::-webkit-scrollbar-thumb {
+background: transparent;
+border-radius: 3px;
+transition: background 0.3s;
+}
+.country-dropdown.scroll-active::-webkit-scrollbar-thumb {
+background: #cccccc;
 }
 .country-group-title{
 padding:8px 12px;
@@ -129,16 +155,56 @@ cursor:pointer;
 background:#f3f3f3;
 }
 /* ====================================== */
-.phone-input {
+/* 手机号输入框外层容器，用来放手机图标 + 清除按钮 */
+.phone-input-box{
+position:relative;
 flex:1;
+height:59px;
+}
+/* 手机SVG图标 #d2d0cf */
+.phone-icon{
+position:absolute;
+left:20px;
+top:50%;
+transform:translateY(-50%);
+width:20px;
+height:20px;
+fill:#d2d0cf;
+pointer-events:none;
+}
+/* 清除按钮 */
+.clear-icon{
+position:absolute;
+right:16px;
+top:50%;
+transform:translateY(-50%);
+width:24px;
+height:24px;
+border-radius:50%;
+background:#d2d0cf;
+display:none;
+align-items:center;
+justify-content:center;
+cursor:pointer;
+z-index:2;
+}
+.clear-icon svg{
+width:14px;
+height:14px;
+fill:#fff;
+}
+/* 手机号输入框 圆角8px，自适应宽度，和按钮右对齐 */
+.phone-input {
+width:100%;
 height: 59px;
-border-radius: 24px;
+border-radius:8px;
 border: none;
 font-size: 20px;
-padding: 0 24px;
+padding: 0 52px 0 48px; /* 右侧增加padding，防止文字被清除图标挡住 */
 outline: none;
 background: #ffffff;
-        }
+min-width:0;
+}
 .get-code-btn {
 width: 100%;
 height: 48px;
@@ -148,11 +214,11 @@ font-size: 18px;
 color: #b8b8b8;
 background: #ffffff;
 cursor: pointer;
-        }
+}
 .get-code-btn:disabled {
 opacity: 0.7;
-        }
-/*==== 修改：半透明提示弹窗（无底部确认按钮，3秒自动消失）====*/
+}
+/*==== 半透明提示弹窗（无底部确认按钮，3秒自动消失）====*/
 .modal-mask {
 position: fixed;
 top: 0;
@@ -256,6 +322,57 @@ font-size:14px;
 }
 .slide-modal-mask.show{
 display:flex;
+}
+/* 适配手机小屏 */
+@media (max-width: 480px) {
+.container{
+padding: 0 20px;
+padding-top: 90px; /* 小屏保持足够顶部距离，避开返回按钮 */
+}
+.card-desc{
+margin-bottom:28px;
+}
+.phone-input-wrap{
+gap:8px;
+}
+.country-code-wrap{
+min-width:90px;
+height:48px;
+}
+.country-display{
+height:48px;
+font-size:16px;
+line-height:48px;
+}
+.country-dropdown{
+width:220px;
+}
+.phone-input-box{
+height:48px;
+}
+.phone-input{
+height:48px;
+font-size:16px;
+padding:0 44px 0 42px;
+}
+.phone-icon{
+left:16px;
+width:18px;
+height:18px;
+}
+.clear-icon{
+right:12px;
+width:22px;
+height:22px;
+}
+.clear-icon svg{
+width:12px;
+height:12px;
+}
+.get-code-btn{
+height:44px;
+font-size:16px;
+}
 }
 </style>
 </head>
@@ -469,7 +586,19 @@ display:flex;
 <div class="country-item" data-code="+680">帕劳 +680</div>
 </div>
 </div>
-<input class="phone-input" id="phoneInput" placeholder="请输入手机号" maxlength="11" />
+<div class="phone-input-box">
+<!-- SVG手机图标，颜色#d2d0cf -->
+<svg class="phone-icon" viewBox="0 0 24 24">
+<path d="M17 1H7c-1.1 0-2 .9-2 2v18c0 1.1.9 2 2 2h10c1.1 0 2-.9 2-2V3c0-1.1-.9-2-2-2zm0 18H7V5h10v14z"/>
+</svg>
+<!-- 清除按钮 -->
+<div class="clear-icon" id="clearIcon">
+<svg viewBox="0 0 24 24">
+<path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+</svg>
+</div>
+<input class="phone-input" id="phoneInput" placeholder="请输入手机号" maxlength="11" type="tel" />
+</div>
 </div>
 <button class="get-code-btn" id="getCodeBtn">获取验证码</button>
 </div>
@@ -504,12 +633,23 @@ const modalMask = document.getElementById("modalMask");
 const modalMsg = document.getElementById("modalMsg");
 const modalOkBtn = document.getElementById("modalOkBtn");
 const backBtn = document.getElementById("backBtn");
+const clearIcon = document.getElementById("clearIcon");
 
 // 自定义国家码组件
 const countryDisplay = document.getElementById("countryDisplay");
 const countryDropdown = document.getElementById("countryDropdown");
 const countryItems = document.querySelectorAll(".country-item");
 let currentCountryCode = "+86";
+
+// 滚动防抖计时器（滚动条自动隐藏）
+let scrollTimer = null;
+countryDropdown.addEventListener('scroll', function(){
+  this.classList.add('scroll-active');
+  clearTimeout(scrollTimer);
+  scrollTimer = setTimeout(()=>{
+    this.classList.remove('scroll-active');
+  }, 600);
+})
 
 // 点击展开下拉
 countryDisplay.addEventListener("click", (e)=>{
@@ -527,6 +667,33 @@ countryItems.forEach(item=>{
 // 点击页面空白关闭下拉
 document.addEventListener("click", ()=>{
     countryDropdown.classList.remove("show");
+})
+
+// 清除按钮逻辑
+function toggleClearIcon(){
+    if(phoneInput.value.trim() !== ""){
+        clearIcon.style.display = "flex";
+    }else{
+        clearIcon.style.display = "none";
+    }
+}
+// 输入监听：过滤非数字 + 控制清除按钮显示
+phoneInput.addEventListener('input', function(e) {
+  this.value = this.value.replace(/\D/g, '');
+  toggleClearIcon();
+});
+// 粘贴拦截，过滤非数字并限制最多11位
+phoneInput.addEventListener('paste', function(e){
+  e.preventDefault();
+  const pasteText = (e.clipboardData || window.clipboardData).getData('text');
+  const onlyNum = pasteText.replace(/\D/g,'');
+  this.value = onlyNum.slice(0,11);
+  toggleClearIcon();
+})
+clearIcon.addEventListener('click', ()=>{
+    phoneInput.value = "";
+    toggleClearIcon();
+    phoneInput.focus();
 })
 
 //滑块元素
