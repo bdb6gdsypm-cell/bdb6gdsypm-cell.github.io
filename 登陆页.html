@@ -11,6 +11,8 @@ margin: 0;
 padding: 0;
 box-sizing: border-box;
 font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+/* 修复安卓点击蓝色方块 */
+-webkit-tap-highlight-color: transparent;
     }
 html, body {
 height: 100vh;
@@ -91,21 +93,34 @@ gap: 10px;
 cursor: pointer;
 margin-bottom: 20px;
 box-shadow: 0 10px 24px rgba(240, 88, 136, 0.28);
-    }
+}
+.btn-onekey:active{
+    background: #f8b3c8 !important;
+}
 /* svg图标大小 */
 .btn-onekey svg {
 width:22px;
 height:22px;
 }
+/* ========== 修改：手机验证码登录，缩小点击范围，改为inline-block，仅文字区域可点击 ========== */
+.link-code-wrap{
+    text-align:center;
+    margin-bottom: 36px;
+}
 .link-code {
-display: block;
-text-align: center;
+display: inline-block;
 font-size: 17px;
 color: #444;
 text-decoration: none;
-margin-bottom: 36px;
 cursor:pointer;
-    }
+-webkit-tap-highlight-color: transparent;
+padding:4px 8px;
+border-radius:8px;
+}
+.link-code:active{
+    background: rgba(0,0,0,0.06);
+    /* 点击背景只包裹文字，不会整行长条 */
+}
 .other-title {
 display: flex;
 align-items: center;
@@ -137,6 +152,7 @@ justify-content: center;
 font-size: 26px;
 color: #fff;
 cursor:pointer;
+-webkit-tap-highlight-color: transparent;
     }
 .wx {
 background: url('wechat.png') center / contain no-repeat;
@@ -165,6 +181,7 @@ margin-bottom: 10px;
 color: #f06898;
 text-decoration: none;
 cursor:pointer;
+-webkit-tap-highlight-color: transparent;
     }
 /* 将复选框改为圆形单选样式 */
 .agree-box input[type="checkbox"] {
@@ -223,6 +240,16 @@ text-align:center;
     background:#fff;
     border-radius:16px;
     overflow:hidden;
+    position:relative;
+}
+.modal-close{
+    position:absolute;
+    right:16px;
+    top:14px;
+    font-size:24px;
+    color:#666;
+    cursor:pointer;
+    -webkit-tap-highlight-color: transparent;
 }
 .modal-header{
     padding:16px;
@@ -249,6 +276,7 @@ text-align:center;
     border:none;
     font-size:16px;
     cursor:pointer;
+    -webkit-tap-highlight-color: transparent;
 }
 .btn-accept{
     background:#f06898;
@@ -258,7 +286,7 @@ text-align:center;
     background:#f8b3c8;
     cursor:not-allowed;
 }
-.btn-cancel{
+.btn-refuse{
     background:#eee;
     color:#333;
 }
@@ -298,6 +326,7 @@ text-align:center;
     border:none;
     font-size:16px;
     cursor:pointer;
+    -webkit-tap-highlight-color: transparent;
 }
 .alert-confirm{
     background:#f06898;
@@ -317,7 +346,8 @@ text-align:center;
 .social-item {width:54px;height:54px;font-size:23px;}
 .social-row {gap:30px;margin-bottom:26px;}
 .other-title {font-size:15px;margin-bottom:22px;}
-.link-code {font-size:16px;margin-bottom:30px;}
+.link-code {font-size:16px;}
+.link-code-wrap{margin-bottom:30px;}
 .agree-box {font-size:14px;}
 .agree-box input[type="checkbox"] {width:16px;height:16px;margin-top:0;}
 .agree-box input[type="checkbox"]:checked::after {width:8px;height:8px;}
@@ -331,7 +361,8 @@ text-align:center;
 .social-row {gap:24px;margin-bottom:20px;}
 .social-item {width:48px;height:48px;font-size:20px;}
 .other-title {font-size:14px;margin-bottom:18px;}
-.link-code {font-size:14px;margin-bottom:22px;}
+.link-code {font-size:14px;}
+.link-code-wrap{margin-bottom:22px;}
 .agree-box {font-size:13px;line-height:1.35;}
 .agree-box input[type="checkbox"] {width:15px;height:15px;margin-top:0;}
 .agree-box input[type="checkbox"]:checked::after {width:7px;height:7px;}
@@ -345,7 +376,8 @@ text-align:center;
 .social-row {gap:20px;margin-bottom:16px;}
 .social-item {width:42px;height:42px;font-size:18px;}
 .other-title {font-size:13px;margin-bottom:14px;}
-.link-code {font-size:13px;margin-bottom:18px;}
+.link-code {font-size:13px;}
+.link-code-wrap{margin-bottom:18px;}
 .agree-box {font-size:12px;line-height:1.3;}
 .agree-box input[type="checkbox"] {width:14px;height:14px;margin-top:0;}
 .agree-box input[type="checkbox"]:checked::after {width:6px;height:6px;}
@@ -378,7 +410,10 @@ text-align:center;
 </svg>
 <span>本机号码一键登录</span>
 </button>
-<a class="link-code" id="linkCode">手机验证码登录 &gt;</a>
+<!-- 修改：外层增加wrap，文字链接改为inline-block，仅文字区域可点击 -->
+<div class="link-code-wrap">
+    <span class="link-code" id="linkCode">手机验证码登录 &gt;</span>
+</div>
 <div class="other-title">其他登录方式</div>
 <div class="social-row">
 <div class="social-item wx" id="wxLogin"></div>
@@ -399,13 +434,14 @@ text-align:center;
 <!-- 协议共用弹窗 -->
 <div class="modal-mask" id="protocolModal">
     <div class="modal-box">
+        <span class="modal-close" id="modalClose">×</span>
         <div class="modal-header" id="modalTitle">用户协议</div>
         <div class="modal-body" id="modalBody">
             <!-- 内容留空，在这里填入对应协议文本 -->
         </div>
         <div class="modal-footer">
             <button class="btn-accept" id="acceptBtn">同意并接受(10s)</button>
-            <button class="btn-cancel" id="cancelBtn">取消</button>
+            <button class="btn-refuse" id="refuseBtn">不同意</button>
         </div>
     </div>
 </div>
@@ -427,7 +463,8 @@ const protocolModal = document.getElementById('protocolModal');
 const modalTitle = document.getElementById('modalTitle');
 const modalBody = document.getElementById('modalBody');
 const acceptBtn = document.getElementById('acceptBtn');
-const cancelBtn = document.getElementById('cancelBtn');
+const refuseBtn = document.getElementById('refuseBtn');
+const modalClose = document.getElementById('modalClose');
 const agreeCheck = document.getElementById('agreeCheck');
 //提醒弹窗
 const alertModal = document.getElementById('alertModal');
@@ -436,6 +473,7 @@ const alertConfirmBtn = document.getElementById('alertConfirmBtn');
 const alertCancelBtn = document.getElementById('alertCancelBtn');
 
 let timer = null;
+let currentProtocolName = '';
 // 协议顺序
 const protocolList = ["用户协议", "隐私政策", "认证服务条款"];
 // 记录三个协议是否已同意
@@ -459,82 +497,96 @@ function getUnAgreeProtocolList(){
 }
 //打开指定协议弹窗
 function openProtocolModal(titleText){
+    currentProtocolName = titleText;
     modalTitle.innerText = titleText;
-    modalBody.innerText = "";
+    modalBody.innerText = titleText + " 协议内容";
     protocolModal.style.display = 'flex';
-    acceptBtn.disabled = true;
-    let count = 10;
-    acceptBtn.innerText = `同意并接受(${count}s)`;
-    if(timer) clearInterval(timer);
-    timer = setInterval(()=>{
-        count--;
+
+    // 如果已经同意，按钮文字改为您已同意并接受，不需要倒计时
+    if(agreeState[titleText]){
+        acceptBtn.innerText = "您已同意并接受";
+        acceptBtn.disabled = true;
+    }else{
+        acceptBtn.disabled = true;
+        let count = 10;
         acceptBtn.innerText = `同意并接受(${count}s)`;
-        if(count <= 0){
-            clearInterval(timer);
-            acceptBtn.innerText = "同意并接受";
-            acceptBtn.disabled = false;
-        }
-    },1000);
+        if(timer) clearInterval(timer);
+        timer = setInterval(()=>{
+            count--;
+            acceptBtn.innerText = `同意并接受(${count}s)`;
+            if(count <= 0){
+                clearInterval(timer);
+                acceptBtn.innerText = "同意并接受";
+                acceptBtn.disabled = false;
+            }
+        },1000);
+    }
+}
+//关闭协议弹窗
+function closeProtocolModal(){
+    protocolModal.style.display = 'none';
+    if(timer) clearInterval(timer);
 }
 
-//一键登录 和 第三方图标 弹出 3秒 开发中
+//一键登录 点击效果
 document.getElementById('btnOneKey').addEventListener('click',()=>{
-showToast("本机号码一键登陆功能还在开发中",3000);
+showToast("本机号码一键登陆功能，正在开发中",3000);
 })
 document.getElementById('wxLogin').addEventListener('click',()=>{
-showToast("微信登陆功能还在开发中",3000);
+showToast("微信登陆功能，正在开发中",3000);
 })
 document.getElementById('qqLogin').addEventListener('click',()=>{
-showToast("QQ登陆该功能还在开发中",3000);
+showToast("QQ登陆该功能，正在开发中",3000);
 })
 document.getElementById('appleLogin').addEventListener('click',()=>{
-showToast("APPLE ID 登陆该功能还在开发中",3000);
+showToast("APPLE ID 登陆该功能，正在开发中",3000);
 })
 //手机验证码登录
 document.getElementById('linkCode').addEventListener('click',()=>{
 if(!agreeCheck.checked){
-showToast("如需继续使用本软件请阅读并同意用户协议、隐私政策、认证服务条款，否则无法继续使用",5000);
+showToast("如需继续使用本软件请阅读并同意【用户协议、隐私政策、认证服务条款】，否则无法继续使用",5000);
     }else{
 window.location.href = "手机号输入页.html";
     }
 })
 
-//点击协议文字，开始依次阅读流程
+//点击协议文字
 document.querySelectorAll('.protocol-link').forEach(item=>{
     item.addEventListener('click', function(e){
         e.preventDefault();
-        const unAgreeList = getUnAgreeProtocolList();
-        if(unAgreeList.length >0){
-            openProtocolModal(unAgreeList[0]);
-        }
+        const title = this.dataset.title;
+        openProtocolModal(title);
     })
+})
+//右上角关闭按钮
+modalClose.onclick = closeProtocolModal;
+//点击遮罩关闭协议弹窗
+protocolModal.addEventListener('click',function(e){
+    if(e.target === protocolModal){
+        closeProtocolModal();
+    }
 })
 
 //协议弹窗【同意】
 acceptBtn.onclick = function(){
-    const currentTitle = modalTitle.innerText;
-    agreeState[currentTitle] = true;
+    if(agreeState[currentProtocolName]) return;
+    agreeState[currentProtocolName] = true;
     clearInterval(timer);
     const unAgreeList = getUnAgreeProtocolList();
     if(unAgreeList.length >0){
         openProtocolModal(unAgreeList[0]);
     }else{
-        protocolModal.style.display = 'none';
+        closeProtocolModal();
         agreeCheck.checked = true;
     }
 }
-//协议弹窗【取消】
-cancelBtn.onclick = function(){
-    protocolModal.style.display = 'none';
-    clearInterval(timer);
+//协议弹窗【不同意】
+refuseBtn.onclick = function(){
+    agreeState[currentProtocolName] = false;
+    agreeCheck.checked = false;
+    closeProtocolModal();
+    showToast(`你已取消同意并接受【${currentProtocolName}】，将无法继续使用。如需再次使用需重新阅读相关协议同意并接受`,5000);
 }
-//点击遮罩关闭协议弹窗
-protocolModal.addEventListener('click',function(e){
-    if(e.target === protocolModal){
-        protocolModal.style.display = 'none';
-        clearInterval(timer);
-    }
-})
 
 //点击复选框
 agreeCheck.addEventListener('click',function(e){
