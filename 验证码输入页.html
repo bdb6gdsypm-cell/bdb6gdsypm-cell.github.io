@@ -63,11 +63,13 @@ color: #ffffff;
 margin-bottom: 8px;
         }
 .tip-text {
-font-size: 18px;
+font-size: clamp(14px,4vw,18px);
 color: #ffffff;
 opacity: 0.85;
 margin-bottom: 28px;
-        }
+white-space: nowrap;
+overflow: hidden;
+}
 /* 验证码输入框容器 */
 .code-box-container {
 display: flex;
@@ -75,7 +77,6 @@ gap: 16px;
 margin-bottom: 28px;
 position:relative;
         }
-/* ===== 修复：移出屏幕而不是透明1px ===== */
 #hiddenInput{
 position:absolute;
 left:-9999px;
@@ -89,7 +90,7 @@ flex: 1;
 aspect-ratio: 1 / 1;
 background: #ffffff;
 border: 3px solid #fff;
-border-radius: 20px;
+border-radius: 12px;
 display: flex;
 align-items: center;
 justify-content: center;
@@ -100,7 +101,6 @@ position: relative;
 cursor: pointer;
 transition: 0.2s;
         }
-/* 仅当前格子触发粉色闪光动画 */
 .code-item.flash {
 animation: flashPink 0.25s ease-out;
 }
@@ -157,7 +157,8 @@ justify-content: center;
         }
 .modal-wrap {
 width: 280px;
-background: #fff;border-radius: 16px;
+background: #fff;
+border-radius: 12px;
 overflow: hidden;
         }
 .modal-body {
@@ -199,7 +200,7 @@ display:flex;
 .slide-modal-wrap{
 width:320px;
 background:#fff;
-border-radius:16px;
+border-radius:12px;
 overflow:hidden;
 }
 .slide-modal-body{
@@ -215,7 +216,7 @@ margin-bottom:20px;
 width:100%;
 height:44px;
 background:#e8e8e8;
-border-radius:22px;
+border-radius:12px;
 position:relative;
 overflow:hidden;
 touch-action:none;
@@ -354,7 +355,7 @@ const slideProgress = document.getElementById("slideProgress");
 const slideTip = document.getElementById("slideTip");
 let slideVerified = false;
 let isDrag = false;
-let maxW = 0; // 最大拖动距离，打开弹窗后再计算
+let maxW = 0;
 //toast浮窗
 const toastMask = document.getElementById("toastMask");
 const toastText = document.getElementById("toastText");
@@ -363,18 +364,46 @@ let pos = 0;
 let timer = null;
 let realVerifyCode = "";
 let codeGenerateTime = 0;
-let codeIsUsed = false; //标记验证码是否已经使用成功一次
-// 存储key：按手机号区分，不同手机号独立计数
+let codeIsUsed = false;
+let codeErrorCount = 0; // 当前验证码错误次数（单验证码）
+// 存储key：按手机号区分
 const STORAGE_KEY = "sms_send_records_" + phone;
 const CODE_CACHE_KEY = "current_code_" + phone;
+const LOCK_KEY = "phone_lock_info_" + phone;
 const ONE_HOUR = 60 * 60 * 1000;
 const CODE_EXPIRE = 2 * 60 * 1000; //验证码2分钟有效期
+
+// 锁定信息读取
+function getLockInfo(){
+const raw = localStorage.getItem(LOCK_KEY);
+if(!raw) return {globalFailCount:0, lockEndTs:0};
+return JSON.parse(raw);
+}
+function saveLockInfo(obj){
+localStorage.setItem(LOCK_KEY, JSON.stringify(obj));
+}
+// 检查当前是否锁定
+function checkIsLocked(){
+const lockInfo = getLockInfo();
+const now = Date.now();
+if(lockInfo.lockEndTs > now){
+return {isLocked:true, remain: lockInfo.lockEndTs - now};
+}
+return {isLocked:false, remain:0};
+}
+// 计算下一次锁定时长（全局错误次数）
+function getLockDuration(failCount){
+if(failCount === 10) return 1 * 60 * 1000;
+if(failCount === 11) return 5 * 60 * 1000;
+if(failCount === 12) return 10 * 60 * 1000;
+if(failCount >=13) return 30 * 60 * 1000;
+return 0;
+}
 // 获取一小时内的发送记录
 function getSmsRecords() {
 const raw = localStorage.getItem(STORAGE_KEY);
 let list = raw ? JSON.parse(raw) : [];
 const now = Date.now();
-// 过滤掉超过1小时的记录
 list = list.filter(ts => now - ts < ONE_HOUR);
 localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
 return list;
@@ -385,15 +414,15 @@ const list = getSmsRecords();
 list.push(Date.now());
 localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
 }
-// 缓存验证码 + 倒计时信息 + 首次跳转标记
-function saveCodeCache(code, time, used, countStartTs, totalSec, isFirstJump){
+// 缓存验证码 + 倒计时信息 + 错误次数
+function saveCodeCache(code, time, used, countStartTs, totalSec, codeErrCnt){
 const cacheData = {
 code: code,
 generateTime: time,
 used: used,
 countStartTs: countStartTs,
 totalSec: totalSec,
-isFirstJump: isFirstJump
+codeErrorCount: codeErrCnt
     }
 localStorage.setItem(CODE_CACHE_KEY, JSON.stringify(cacheData));
 }
@@ -403,7 +432,6 @@ const raw = localStorage.getItem(CODE_CACHE_KEY);
 if(!raw) return null;
 const obj = JSON.parse(raw);
 const now = Date.now();
-//超过2分钟验证码失效，清空缓存
 if(now - obj.generateTime > CODE_EXPIRE){
 localStorage.removeItem(CODE_CACHE_KEY);
 return null;
@@ -411,76 +439,115 @@ return null;
 return obj;
 }
 tipText.innerText = "验证码已发送至 +86 " + phone;
-// 更新格子显示+光标位置
 function renderCode(){
 boxes.forEach((box,idx)=>{
 box.innerText = codeArr[idx] || "";
 box.classList.remove("active");
     })
 }
-// 只给指定索引格子触发粉色闪光特效
 function triggerFlash(index){
 const box = boxes[index];
 box.classList.remove('flash');
 void box.offsetWidth;
 box.classList.add('flash');
 }
-// 点击验证码格子，唤起原生键盘
 boxes.forEach(box=>{
 box.addEventListener('click',()=>{
 hiddenInput.focus();
 if(pos<4) boxes[pos].classList.add("active");
     })
 })
-// ==========【修复后的输入监听】==========
+// ==========【输入校验逻辑（重写】==========
 hiddenInput.addEventListener('input',(e)=>{
-    let val = e.target.value.replace(/\D/g, '').slice(0,4);
-    e.target.value = val;
-    // 强制光标到末尾
-    setTimeout(()=>{
-        hiddenInput.setSelectionRange(val.length, val.length);
+let val = e.target.value.replace(/\D/g, '').slice(0,4);
+e.target.value = val;
+setTimeout(()=>{
+hiddenInput.setSelectionRange(val.length, val.length);
     },0);
-
-    codeArr = ["","","",""];
-    for(let i=0; i<val.length; i++){
-        codeArr[i] = val[i];
-        triggerFlash(i);
+codeArr = ["","","",""];
+for(let i=0; i<val.length; i++){
+codeArr[i] = val[i];
+triggerFlash(i);
     }
-    pos = val.length;
-    renderCode();
-
-    if(hiddenInput.matches(':focus') && pos<4){
-        boxes[pos].classList.add("active");
+pos = val.length;
+renderCode();
+if(hiddenInput.matches(':focus') && pos<4){
+boxes[pos].classList.add("active");
     }
-    //输入满4位自动校验
-    if(pos >=4){
-        hiddenInput.blur();
-        const inputCode = codeArr.join("");
-        const now = Date.now();
-        const twoMinute = 2 * 60 * 1000;
-        if(codeIsUsed){
-            showToast("当前验证码已失效请重新获取");
-        }else if(inputCode === realVerifyCode){
-            if(now - codeGenerateTime > twoMinute){
-                showToast("当前验证码已失效请重新获取");
-            }else{
-                showToast(`欢迎回来 ${phone}`);
-                codeIsUsed = true;
-                saveCodeCache(realVerifyCode, codeGenerateTime, codeIsUsed, Date.now(), 60, false);
-            }
-        }else{
-            showToast("验证码错误");
-            codeArr = ["","","",""];
-            pos =0;
-            hiddenInput.value = "";
-            renderCode();
-        }
-    }
+//输入满4位自动校验
+if(pos >=4){
+hiddenInput.blur();
+const inputCode = codeArr.join("");
+const now = Date.now();
+const lockInfo = getLockInfo();
+const lockStatus = checkIsLocked();
+// 如果账号处于锁定状态
+if(lockStatus.isLocked){
+showToast(`账号锁定中，请等待${Math.ceil(lockStatus.remain/1000)}秒后重试`);
+resetInput();
+return;
+}
+// 验证码过期
+if(now - codeGenerateTime > CODE_EXPIRE){
+showToast("当前验证码已失效请重新获取");
+resetInput();
+return;
+}
+// 验证码已经成功使用过一次
+if(codeIsUsed){
+showToast("当前验证码已失效请重新获取");
+resetInput();
+return;
+}
+// 当前验证码错误次数 >=5，第6次直接失效
+if(codeErrorCount >=5){
+showToast("当前验证码错误次数过多，请重新获取");
+resetInput();
+return;
+}
+if(inputCode === realVerifyCode){
+//✅验证成功，清空全局错误次数
+codeIsUsed = true;
+saveCodeCache(realVerifyCode, codeGenerateTime, codeIsUsed, cacheCode?.countStartTs||Date.now(), cacheCode?.totalSec||60, codeErrorCount);
+let lockData = getLockInfo();
+lockData.globalFailCount = 0;
+lockData.lockEndTs = 0;
+saveLockInfo(lockData);
+showToast(`欢迎回来 ${phone}`);
+resetInput();
+}else{
+//❌验证码错误，单验证码错误次数+1，全局错误次数+1
+codeErrorCount++;
+let lockData = getLockInfo();
+lockData.globalFailCount +=1;
+const newGlobalFail = lockData.globalFailCount;
+//判断是否需要上锁
+const lockDur = getLockDuration(newGlobalFail);
+if(lockDur>0){
+lockData.lockEndTs = Date.now() + lockDur;
+}
+saveLockInfo(lockData);
+// 提示文案
+if(newGlobalFail >=6 && newGlobalFail <10){
+const remainTry = 10 - newGlobalFail;
+showToast(`验证码错误，还可尝试${remainTry}次后账户将被锁定1分钟`);
+}else{
+showToast("验证码错误");
+}
+saveCodeCache(realVerifyCode, codeGenerateTime, codeIsUsed, cacheCode?.countStartTs||Date.now(), cacheCode?.totalSec||60, codeErrorCount);
+resetInput();
+}
+}
 })
-// 聚焦时自动把光标放到末尾
+function resetInput(){
+codeArr = ["","","",""];
+pos =0;
+hiddenInput.value = "";
+renderCode();
+}
 hiddenInput.addEventListener("focus", ()=>{
-    setTimeout(()=>{
-        hiddenInput.setSelectionRange(hiddenInput.value.length, hiddenInput.value.length);
+setTimeout(()=>{
+hiddenInput.setSelectionRange(hiddenInput.value.length, hiddenInput.value.length);
     },0)
 })
 //退格处理
@@ -512,7 +579,7 @@ modalMask.classList.add("show");
 function closeModal(){
 modalMask.classList.remove("show");
         }
-//打开滑块弹窗【修复重点：打开弹窗后再计算宽度】
+//打开滑块弹窗
 function openSlideModal(){
 slideVerified = false;
 slideBtn.style.left = "0px";
@@ -521,7 +588,6 @@ slideTip.textContent = "请拖动滑块完成验证";
 slideTip.style.color="#666";
 slideBtn.style.background="#fff";
 slideModalMask.classList.add("show");
-// 弹窗显示后，再获取滑块盒子尺寸
 setTimeout(()=>{
 maxW = slideBox.clientWidth - slideBtn.offsetWidth;
 },10)
@@ -529,7 +595,6 @@ maxW = slideBox.clientWidth - slideBtn.offsetWidth;
 function closeSlideModal(){
 slideModalMask.classList.remove("show");
 }
-//toast提示：半透明，3秒自动消失
 function showToast(msg){
 toastText.innerText = msg;
 toastMask.classList.add("show");
@@ -541,11 +606,6 @@ toastMask.classList.remove("show");
 function generate4Code() {
 return String(Math.floor(1000 + Math.random() * 9000));
 }
-/**
- * 支持断点续倒计时
- * startTs: 倒计时开始时间戳
- * totalSeconds: 总秒数(60/120)
- */
 function startCountdown(startTs, totalSeconds) {
 clearInterval(timer);
 const now = Date.now();
@@ -572,27 +632,26 @@ resendBtn.innerText = "获取验证码";
 const initRecords = getSmsRecords();
 const cacheCode = getCodeCache();
 if(cacheCode){
-// 存在缓存 = 刷新页面，复用旧验证码，续倒计时，**不自动弹窗**
 realVerifyCode = cacheCode.code;
 codeGenerateTime = cacheCode.generateTime;
 codeIsUsed = cacheCode.used;
+codeErrorCount = cacheCode.codeErrorCount || 0;
 console.log("复用缓存验证码：", realVerifyCode);
 startCountdown(cacheCode.countStartTs, cacheCode.totalSec);
 }else{
-// 无缓存：第一次从手机号页面跳转进来，弹窗，标记首次跳转
 realVerifyCode = generate4Code();
 codeGenerateTime = Date.now();
 codeIsUsed = false;
+codeErrorCount = 0; //新验证码，错误次数清零
 const totalSec = initRecords.length >5 ? 120 :60;
 const countStartTs = Date.now();
-saveCodeCache(realVerifyCode, codeGenerateTime, codeIsUsed, countStartTs, totalSec, false);
+saveCodeCache(realVerifyCode, codeGenerateTime, codeIsUsed, countStartTs, totalSec, codeErrorCount);
 console.log("新生成验证码：", realVerifyCode);
-addSmsRecord(); //仅首次跳转才计入发送次数
+addSmsRecord();
 startCountdown(countStartTs, totalSec);
 openModal("code", realVerifyCode);
 }
 renderCode();
-// 返回按钮，跳回手机号页面
 backBtn.addEventListener('click',()=>{
 location.href = "手机号输入页.html";
 })
@@ -668,13 +727,21 @@ slideTip.style.color="#f56c6c";
 })
 //执行发送验证码逻辑
 function doSendCode(){
+//发送验证码前，先检查锁定状态
+const lockStatus = checkIsLocked();
+if(lockStatus.isLocked){
+const sec = Math.ceil(lockStatus.remain / 1000);
+showToast(`账号锁定中，还需等待${sec}秒才能获取验证码`);
+return;
+}
 const records = getSmsRecords();
 realVerifyCode = generate4Code();
 codeGenerateTime = Date.now();
 codeIsUsed = false;
+codeErrorCount = 0; //换新验证码，当前验证码错误次数重置为0
 const totalSec = records.length >5 ?120:60;
 const countStartTs = Date.now();
-saveCodeCache(realVerifyCode, codeGenerateTime, codeIsUsed, countStartTs, totalSec, false);
+saveCodeCache(realVerifyCode, codeGenerateTime, codeIsUsed, countStartTs, totalSec, codeErrorCount);
 openModal("code", realVerifyCode);
 console.log("重发验证码：",realVerifyCode);
 addSmsRecord();
@@ -688,6 +755,13 @@ startCountdown(countStartTs, totalSec);
 // 点击【重新获取】
 resendBtn.addEventListener('click', ()=>{
 if(resendBtn.disabled) return;
+//先校验锁定状态
+const lockStatus = checkIsLocked();
+if(lockStatus.isLocked){
+const sec = Math.ceil(lockStatus.remain / 1000);
+showToast(`账号锁定中，还需等待${sec}秒才能获取验证码`);
+return;
+}
 const records = getSmsRecords();
 if(records.length >=3){
 openSlideModal();
