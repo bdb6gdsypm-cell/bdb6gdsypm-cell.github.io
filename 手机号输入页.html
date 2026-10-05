@@ -60,9 +60,77 @@ margin-bottom: 40px;
         }
 .phone-input-wrap {
 margin-bottom: 24px;
+display:flex;
+gap:12px;
+align-items:center;
         }
+/* ========== 自定义国家码下拉 ========== */
+.country-code-wrap{
+position:relative;
+min-width:110px;
+height:59px;
+}
+.country-display {
+width:100%;
+height: 59px;
+padding:0 12px;
+padding-right:30px;
+border-radius:24px;
+background:#fff;
+font-size:20px;
+color:#222;
+border:none;
+outline:none;
+text-align:center;
+line-height:59px;
+cursor:pointer;
+}
+.country-code-wrap::after{
+content:"▼";
+position:absolute;
+top:50%;
+transform:translateY(-50%);
+right:20px;
+font-size:14px;
+color:#666;
+pointer-events:none;
+}
+.country-dropdown{
+position:absolute;
+top:62px;
+left:0;
+width:240px;
+max-height:420px;
+overflow-y:auto;
+background:#fff;
+border-radius:16px;
+box-shadow:0 4px 12px rgba(0,0,0,0.12);
+display:none;
+z-index:99;
+}
+.country-dropdown.show{
+display:block;
+}
+.country-group-title{
+padding:8px 12px;
+font-size:15px;
+color:#888;
+background:#f7f7f7;
+position:sticky;
+top:0;
+}
+.country-item{
+padding:10px 12px;
+padding-left:20px;
+font-size:16px;
+cursor:pointer;
+}
+.country-item:hover{
+background:#f3f3f3;
+}
+/* ====================================== */
 .phone-input {
-width: 100%;
+flex:1;
 height: 59px;
 border-radius: 24px;
 border: none;
@@ -99,7 +167,7 @@ justify-content: center;
 }
 .modal-wrap {
 width: auto;
-max-width: 280px;
+max-width: 320px;
 background: rgba(0,0,0,0.65);
 border-radius: 12px;
 overflow: hidden;
@@ -114,7 +182,6 @@ font-weight:500;
 color:#ffffff;
 }
 .modal-footer {
-/* 隐藏底部按钮区域 */
 display:none;
 }
 .modal-mask.show{
@@ -204,6 +271,204 @@ display:flex;
 <div class="card-title">输入你的手机号</div>
 <div class="card-desc">请输入你的手机号，点击获取验证码完成验证</div>
 <div class="phone-input-wrap">
+<div class="country-code-wrap">
+<div class="country-display" id="countryDisplay">+86</div>
+<div class="country-dropdown" id="countryDropdown">
+<div class="country-group-title">中国地区</div>
+<div class="country-item" data-code="+86">中国大陆 +86</div>
+<div class="country-item" data-code="+852">中国香港 +852</div>
+<div class="country-item" data-code="+853">中国澳门 +853</div>
+<div class="country-item" data-code="+886">中国台湾 +886</div>
+
+<div class="country-group-title">亚洲地区</div>
+<div class="country-item" data-code="+93">阿富汗 +93</div>
+<div class="country-item" data-code="+92">巴基斯坦 +92</div>
+<div class="country-item" data-code="+91">印度 +91</div>
+<div class="country-item" data-code="+880">孟加拉国 +880</div>
+<div class="country-item" data-code="+94">斯里兰卡 +94</div>
+<div class="country-item" data-code="+960">马尔代夫 +960</div>
+<div class="country-item" data-code="+977">尼泊尔 +977</div>
+<div class="country-item" data-code="+975">不丹 +975</div>
+<div class="country-item" data-code="+95">缅甸 +95</div>
+<div class="country-item" data-code="+66">泰国 +66</div>
+<div class="country-item" data-code="+856">老挝 +856</div>
+<div class="country-item" data-code="+855">柬埔寨 +855</div>
+<div class="country-item" data-code="+84">越南 +84</div>
+<div class="country-item" data-code="+60">马来西亚 +60</div>
+<div class="country-item" data-code="+65">新加坡 +65</div>
+<div class="country-item" data-code="+673">文莱 +673</div>
+<div class="country-item" data-code="+62">印度尼西亚 +62</div>
+<div class="country-item" data-code="+63">菲律宾 +63</div>
+<div class="country-item" data-code="+670">东帝汶 +670</div>
+<div class="country-item" data-code="+976">蒙古 +976</div>
+<div class="country-item" data-code="+82">韩国 +82</div>
+<div class="country-item" data-code="+850">朝鲜 +850</div>
+<div class="country-item" data-code="+81">日本 +81</div>
+<div class="country-item" data-code="+997">哈萨克斯坦（新） +997</div>
+<div class="country-item" data-code="+7">哈萨克斯坦（旧） +7</div>
+<div class="country-item" data-code="+996">吉尔吉斯斯坦 +996</div>
+<div class="country-item" data-code="+992">塔吉克斯坦 +992</div>
+<div class="country-item" data-code="+998">乌兹别克斯坦 +998</div>
+<div class="country-item" data-code="+993">土库曼斯坦 +993</div>
+<div class="country-item" data-code="+995">格鲁吉亚 +995</div>
+<div class="country-item" data-code="+374">亚美尼亚 +374</div>
+<div class="country-item" data-code="+994">阿塞拜疆 +994</div>
+<div class="country-item" data-code="+966">沙特阿拉伯 +966</div>
+<div class="country-item" data-code="+973">巴林 +973</div>
+<div class="country-item" data-code="+974">卡塔尔 +974</div>
+<div class="country-item" data-code="+965">科威特 +965</div>
+<div class="country-item" data-code="+971">阿联酋 +971</div>
+<div class="country-item" data-code="+968">阿曼 +968</div>
+<div class="country-item" data-code="+967">也门 +967</div>
+<div class="country-item" data-code="+962">约旦 +962</div>
+<div class="country-item" data-code="+961">黎巴嫩 +961</div>
+<div class="country-item" data-code="+963">叙利亚 +963</div>
+<div class="country-item" data-code="+964">伊拉克 +964</div>
+<div class="country-item" data-code="+98">伊朗 +98</div>
+<div class="country-item" data-code="+972">以色列 +972</div>
+<div class="country-item" data-code="+970">巴勒斯坦 +970</div>
+<div class="country-item" data-code="+90">土耳其 +90</div>
+<div class="country-item" data-code="+357">塞浦路斯 +357</div>
+
+<div class="country-group-title">欧洲地区</div>
+<div class="country-item" data-code="+7">俄罗斯 +7</div>
+<div class="country-item" data-code="+47">挪威 +47</div>
+<div class="country-item" data-code="+46">瑞典 +46</div>
+<div class="country-item" data-code="+45">丹麦 +45</div>
+<div class="country-item" data-code="+358">芬兰 +358</div>
+<div class="country-item" data-code="+44">英国 +44</div>
+<div class="country-item" data-code="+353">爱尔兰 +353</div>
+<div class="country-item" data-code="+33">法国 +33</div>
+<div class="country-item" data-code="+49">德国 +49</div>
+<div class="country-item" data-code="+31">荷兰 +31</div>
+<div class="country-item" data-code="+32">比利时 +32</div>
+<div class="country-item" data-code="+34">西班牙 +34</div>
+<div class="country-item" data-code="+351">葡萄牙 +351</div>
+<div class="country-item" data-code="+39">意大利 +39</div>
+<div class="country-item" data-code="+41">瑞士 +41</div>
+<div class="country-item" data-code="+43">奥地利 +43</div>
+<div class="country-item" data-code="+30">希腊 +30</div>
+<div class="country-item" data-code="+48">波兰 +48</div>
+<div class="country-item" data-code="+420">捷克 +420</div>
+<div class="country-item" data-code="+36">匈牙利 +36</div>
+<div class="country-item" data-code="+40">罗马尼亚 +40</div>
+<div class="country-item" data-code="+359">保加利亚 +359</div>
+<div class="country-item" data-code="+381">塞尔维亚 +381</div>
+<div class="country-item" data-code="+385">克罗地亚 +385</div>
+<div class="country-item" data-code="+386">斯洛文尼亚 +386</div>
+<div class="country-item" data-code="+387">波斯尼亚 +387</div>
+<div class="country-item" data-code="+382">黑山 +382</div>
+<div class="country-item" data-code="+389">北马其顿 +389</div>
+<div class="country-item" data-code="+355">阿尔巴尼亚 +355</div>
+<div class="country-item" data-code="+376">安道尔 +376</div>
+<div class="country-item" data-code="+423">列支敦士登 +423</div>
+<div class="country-item" data-code="+352">卢森堡 +352</div>
+<div class="country-item" data-code="+356">马耳他 +356</div>
+<div class="country-item" data-code="+354">冰岛 +354</div>
+<div class="country-item" data-code="+372">爱沙尼亚 +372</div>
+<div class="country-item" data-code="+371">拉脱维亚 +371</div>
+<div class="country-item" data-code="+370">立陶宛 +370</div>
+<div class="country-item" data-code="+375">白俄罗斯 +375</div>
+<div class="country-item" data-code="+380">乌克兰 +380</div>
+<div class="country-item" data-code="+373">摩尔多瓦 +373</div>
+
+<div class="country-group-title">北美洲地区</div>
+<div class="country-item" data-code="+1">美国 +1</div>
+<div class="country-item" data-code="+1">加拿大 +1</div>
+<div class="country-item" data-code="+1787">波多黎各 +1 787</div>
+<div class="country-item" data-code="+1340">美属维尔京群岛 +1 340</div>
+<div class="country-item" data-code="+1671">关岛 +1 671</div>
+<div class="country-item" data-code="+1684">美属萨摩亚 +1 684</div>
+
+<div class="country-group-title">南美洲地区</div>
+<div class="country-item" data-code="+55">巴西 +55</div>
+<div class="country-item" data-code="+54">阿根廷 +54</div>
+<div class="country-item" data-code="+56">智利 +56</div>
+<div class="country-item" data-code="+51">秘鲁 +51</div>
+<div class="country-item" data-code="+57">哥伦比亚 +57</div>
+<div class="country-item" data-code="+58">委内瑞拉 +58</div>
+<div class="country-item" data-code="+506">哥斯达黎加 +506</div>
+<div class="country-item" data-code="+507">巴拿马 +507</div>
+<div class="country-item" data-code="+503">萨尔瓦多 +503</div>
+<div class="country-item" data-code="+504">洪都拉斯 +504</div>
+<div class="country-item" data-code="+505">尼加拉瓜 +505</div>
+<div class="country-item" data-code="+502">危地马拉 +502</div>
+<div class="country-item" data-code="+501">伯利兹 +501</div>
+<div class="country-item" data-code="+52">墨西哥 +52</div>
+
+<div class="country-group-title">非洲地区</div>
+<div class="country-item" data-code="+20">埃及 +20</div>
+<div class="country-item" data-code="+218">利比亚 +218</div>
+<div class="country-item" data-code="+216">突尼斯 +216</div>
+<div class="country-item" data-code="+213">阿尔及利亚 +213</div>
+<div class="country-item" data-code="+212">摩洛哥 +212</div>
+<div class="country-item" data-code="+249">苏丹 +249</div>
+<div class="country-item" data-code="+211">南苏丹 +211</div>
+<div class="country-item" data-code="+251">埃塞俄比亚 +251</div>
+<div class="country-item" data-code="+252">索马里 +252</div>
+<div class="country-item" data-code="+253">吉布提 +253</div>
+<div class="country-item" data-code="+254">肯尼亚 +254</div>
+<div class="country-item" data-code="+255">坦桑尼亚 +255</div>
+<div class="country-item" data-code="+256">乌干达 +256</div>
+<div class="country-item" data-code="+250">卢旺达 +250</div>
+<div class="country-item" data-code="+257">布隆迪 +257</div>
+<div class="country-item" data-code="+243">刚果（金） +243</div>
+<div class="country-item" data-code="+242">刚果（布） +242</div>
+<div class="country-item" data-code="+241">加蓬 +241</div>
+<div class="country-item" data-code="+236">中非 +236</div>
+<div class="country-item" data-code="+237">喀麦隆 +237</div>
+<div class="country-item" data-code="+235">乍得 +235</div>
+<div class="country-item" data-code="+240">赤道几内亚 +240</div>
+<div class="country-item" data-code="+239">圣多美和普林西比 +239</div>
+<div class="country-item" data-code="+234">尼日利亚 +234</div>
+<div class="country-item" data-code="+229">贝宁 +229</div>
+<div class="country-item" data-code="+228">多哥 +228</div>
+<div class="country-item" data-code="+233">加纳 +233</div>
+<div class="country-item" data-code="+225">科特迪瓦 +225</div>
+<div class="country-item" data-code="+226">布基纳法索 +226</div>
+<div class="country-item" data-code="+223">马里 +223</div>
+<div class="country-item" data-code="+221">塞内加尔 +221</div>
+<div class="country-item" data-code="+220">冈比亚 +220</div>
+<div class="country-item" data-code="+224">几内亚 +224</div>
+<div class="country-item" data-code="+245">几内亚比绍 +245</div>
+<div class="country-item" data-code="+232">塞拉利昂 +232</div>
+<div class="country-item" data-code="+231">利比里亚 +231</div>
+<div class="country-item" data-code="+222">毛里塔尼亚 +222</div>
+<div class="country-item" data-code="+227">尼日尔 +227</div>
+<div class="country-item" data-code="+238">佛得角 +238</div>
+<div class="country-item" data-code="+248">塞舌尔 +248</div>
+<div class="country-item" data-code="+230">毛里求斯 +230</div>
+<div class="country-item" data-code="+269">科摩罗 +269</div>
+<div class="country-item" data-code="+261">马达加斯加 +261</div>
+<div class="country-item" data-code="+27">南非 +27</div>
+<div class="country-item" data-code="+267">博茨瓦纳 +267</div>
+<div class="country-item" data-code="+266">莱索托 +266</div>
+<div class="country-item" data-code="+264">纳米比亚 +264</div>
+<div class="country-item" data-code="+268">斯威士兰 +268</div>
+<div class="country-item" data-code="+263">津巴布韦 +263</div>
+<div class="country-item" data-code="+260">赞比亚 +260</div>
+<div class="country-item" data-code="+265">马拉维 +265</div>
+<div class="country-item" data-code="+258">莫桑比克 +258</div>
+<div class="country-item" data-code="+244">安哥拉 +244</div>
+
+<div class="country-group-title">大洋洲地区</div>
+<div class="country-item" data-code="+61">澳大利亚 +61</div>
+<div class="country-item" data-code="+64">新西兰 +64</div>
+<div class="country-item" data-code="+675">巴布亚新几内亚 +675</div>
+<div class="country-item" data-code="+677">所罗门群岛 +677</div>
+<div class="country-item" data-code="+678">瓦努阿图 +678</div>
+<div class="country-item" data-code="+679">斐济 +679</div>
+<div class="country-item" data-code="+676">汤加 +676</div>
+<div class="country-item" data-code="+685">萨摩亚 +685</div>
+<div class="country-item" data-code="+682">库克群岛 +682</div>
+<div class="country-item" data-code="+683">纽埃 +683</div>
+<div class="country-item" data-code="+686">基里巴斯 +686</div>
+<div class="country-item" data-code="+688">图瓦卢 +688</div>
+<div class="country-item" data-code="+692">马绍尔群岛 +692</div>
+<div class="country-item" data-code="+691">密克罗尼西亚 +691</div>
+<div class="country-item" data-code="+680">帕劳 +680</div>
+</div>
+</div>
 <input class="phone-input" id="phoneInput" placeholder="请输入手机号" maxlength="11" />
 </div>
 <button class="get-code-btn" id="getCodeBtn">获取验证码</button>
@@ -239,6 +504,31 @@ const modalMask = document.getElementById("modalMask");
 const modalMsg = document.getElementById("modalMsg");
 const modalOkBtn = document.getElementById("modalOkBtn");
 const backBtn = document.getElementById("backBtn");
+
+// 自定义国家码组件
+const countryDisplay = document.getElementById("countryDisplay");
+const countryDropdown = document.getElementById("countryDropdown");
+const countryItems = document.querySelectorAll(".country-item");
+let currentCountryCode = "+86";
+
+// 点击展开下拉
+countryDisplay.addEventListener("click", (e)=>{
+    e.stopPropagation();
+    countryDropdown.classList.toggle("show");
+})
+// 点击选项选中
+countryItems.forEach(item=>{
+    item.addEventListener("click", ()=>{
+        currentCountryCode = item.dataset.code;
+        countryDisplay.textContent = currentCountryCode;
+        countryDropdown.classList.remove("show");
+    })
+})
+// 点击页面空白关闭下拉
+document.addEventListener("click", ()=>{
+    countryDropdown.classList.remove("show");
+})
+
 //滑块元素
 const slideModalMask = document.getElementById("slideModalMask");
 const slideBox = document.getElementById("slideBox");
@@ -250,18 +540,16 @@ let isDrag = false;
 let maxW = 0;
 let targetPhone = "";
 const ONE_HOUR = 60 * 60 * 1000;
-// 手机号正则
+// 中国大陆手机号正则
 const phoneReg = /^1(3[0-9]|4[579]|5[0-3,5-9]|6[2567]|7[0-8]|8[0-9]|9[0-3,5-9])\d{8}$/;
-// 返回按钮跳转index.html
+// 返回按钮跳转
 backBtn.addEventListener('click', ()=>{
-location.href = "index.html";
+location.href = "登陆页.html";
 });
-
 let modalTimer = null;
 function openModal(msg){
 modalMsg.innerText = msg;
 modalMask.classList.add("show");
-// 清除旧定时器，防止多个弹窗叠加
 if(modalTimer) clearTimeout(modalTimer);
 modalTimer = setTimeout(()=>{
 closeModal();
@@ -303,25 +591,29 @@ const list = getSmsRecords(phone);
 list.push(Date.now());
 localStorage.setItem(key, JSON.stringify(list));
 }
-// 真正跳转验证码页面
-function goVerifyPage(phone){
-location.href = "验证码输入页.html?phone="+encodeURIComponent(phone);
+// 跳转验证码页面
+function goVerifyPage(country, phone){
+location.href = "验证码输入页.html?country="+encodeURIComponent(country)+"&phone="+encodeURIComponent(phone);
 }
 getCodeBtn.addEventListener('click', ()=>{
 const val = phoneInput.value.trim();
-// 使用正则完整校验
+const code = currentCountryCode;
+// 判断：非中国大陆区号时，提示当前仅支持中国大陆手机号
+if(code !== "+86"){
+openModal("当前仅支持中国大陆手机号");
+return;
+}
 if(!phoneReg.test(val)){
 openModal("手机号格式不正确，请输入有效的11位中国大陆手机号");
 return;
 }
-targetPhone = val;
+targetPhone = code + val;
 const records = getSmsRecords(targetPhone);
-// >=3次，弹出滑块验证
 if(records.length >=3){
 openSlideModal();
 }else{
 addSmsRecord(targetPhone);
-goVerifyPage(targetPhone);
+goVerifyPage(code, val);
 }
 })
 //滑块鼠标事件
@@ -351,7 +643,7 @@ slideBtn.style.background="#00c48c";
 setTimeout(()=>{
 closeSlideModal();
 addSmsRecord(targetPhone);
-goVerifyPage(targetPhone);
+goVerifyPage(currentCountryCode, phoneInput.value.trim());
 },600)
 }else{
 slideBtn.style.left = "0px";
@@ -387,7 +679,7 @@ slideBtn.style.background="#00c48c";
 setTimeout(()=>{
 closeSlideModal();
 addSmsRecord(targetPhone);
-goVerifyPage(targetPhone);
+goVerifyPage(currentCountryCode, phoneInput.value.trim());
 },600)
 }else{
 slideBtn.style.left = "0px";
@@ -396,8 +688,6 @@ slideTip.textContent = "验证失败，请重试";
 slideTip.style.color="#f56c6c";
 }
 })
-// 移除确定按钮点击事件，不再需要
-// modalOkBtn.addEventListener('click', closeModal);
 modalMask.addEventListener('click',e=>{if(e.target===modalMask) closeModal();})
 </script>
 </body>
