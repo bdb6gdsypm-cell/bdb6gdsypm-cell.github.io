@@ -64,11 +64,38 @@ overflow: hidden;
 text-overflow: ellipsis;
         }
 .phone-input-wrap {
-margin-bottom: 24px;
+margin-bottom: 8px;
 display:flex;
 gap:12px;
 align-items:center;
 width:100%;
+}
+/* ========== 修改：错误提示行，取消自带颜色，用来放内联胶囊span ========== */
+.error-tip-line{
+width:100%;
+margin-bottom:24px;
+font-size:14px;
+min-height:20px;
+}
+/* ✅ 新增：白色胶囊提示，宽度跟随文字，胶囊圆角【已修复空文字消失】+单行自适应字号 */
+.error-tip-badge{
+display:inline-block;
+background:#ffffff;
+color:#ff6b81;
+border-radius:999px;
+padding:3px 12px;
+opacity:0;
+visibility:hidden;
+transition: all 0.2s ease;
+font-size: clamp(12px,2.5vw,14px);
+white-space: nowrap;
+overflow: hidden;
+text-overflow: ellipsis;
+max-width: 100%;
+}
+.error-tip-badge.has-text{
+opacity:1;
+visibility:visible;
 }
 /* ========== 自定义国家码下拉 | 圆角8px ========== */
 .country-code-wrap{
@@ -92,6 +119,12 @@ text-align:center;
 line-height:59px;
 cursor:pointer;
 transition: border 0.2s;
+}
+/* 禁用状态样式 */
+.country-display.disabled {
+cursor: not-allowed;
+opacity:0.75;
+pointer-events:none;
 }
 /* 粉色边框样式 */
 .country-display.error-border {
@@ -240,9 +273,11 @@ font-size: 18px;
 color: #b8b8b8;
 background: #ffffff;
 cursor: pointer;
+transition: all 0.2s;
 }
 .get-code-btn:disabled {
 opacity: 0.7;
+cursor: not-allowed;
 }
 /*==== 半透明提示弹窗（无底部确认按钮，3秒自动消失）====*/
 .modal-mask {
@@ -251,7 +286,7 @@ top: 0;
 left: 0;
 right: 0;
 bottom: 0;
-background: rgba(0, 0, 0, 0.161); /* 粉色半透明遮罩【修改】 */
+background: rgba(255,182,193,0.35); /*粉色半透明遮罩【修改】 */
 z-index: 200;
 display: none;
 align-items: center;
@@ -360,6 +395,15 @@ margin-bottom:28px;
 }
 .phone-input-wrap{
 gap:8px;
+margin-bottom:8px;
+}
+.error-tip-line{
+margin-bottom:20px;
+}
+/* 小屏下胶囊字号再缩小 */
+.error-tip-badge{
+font-size: clamp(11px,3vw,12px);
+padding:2px 10px;
 }
 .country-code-wrap{
 min-width:90px;
@@ -514,7 +558,7 @@ font-size:16px;
 <div class="country-item" data-code="+423">列支敦士登 +423</div>
 <div class="country-item" data-code="+352">卢森堡 +352</div>
 <div class="country-item" data-code="+356">马耳他 +356</div>
-<div class="country-item" data-code="+354">冰岛 +354</div>
+<div class.country-item" data-code="+354">冰岛 +354</div>
 <div class="country-item" data-code="+372">爱沙尼亚 +372</div>
 <div class="country-item" data-code="+371">拉脱维亚 +371</div>
 <div class="country-item" data-code="+370">立陶宛 +370</div>
@@ -590,7 +634,6 @@ font-size:16px;
 <div class="country-item" data-code="+27">南非 +27</div>
 <div class="country-item" data-code="+267">博茨瓦纳 +267</div>
 <div class="country-item" data-code="+266">莱索托 +266</div>
-<div class="country-item" data-code="+264">纳米比亚 +264</div>
 <div class="country-item" data-code="+268">斯威士兰 +268</div>
 <div class="country-item" data-code="+263">津巴布韦 +263</div>
 <div class="country-item" data-code="+260">赞比亚 +260</div>
@@ -629,6 +672,8 @@ font-size:16px;
 <input class="phone-input" id="phoneInput" placeholder="请输入手机号" maxlength="11" type="tel" />
 </div>
 </div>
+<!-- ✅修改：错误提示行，内部放span胶囊 -->
+<div class="error-tip-line" id="errorTip"><span class="error-tip-badge"></span></div>
 <button class="get-code-btn" id="getCodeBtn">获取验证码</button>
 </div>
 <!--普通提示弹窗（已移除确认按钮）-->
@@ -663,11 +708,32 @@ const modalMsg = document.getElementById("modalMsg");
 const modalOkBtn = document.getElementById("modalOkBtn");
 const backBtn = document.getElementById("backBtn");
 const clearIcon = document.getElementById("clearIcon");
+const errorTip = document.getElementById("errorTip");
+const errorTipBadge = errorTip.querySelector('.error-tip-badge'); //获取胶囊span
+// 设置提示函数，统一控制胶囊显示隐藏
+function setErrorTip(text){
+errorTipBadge.innerText = text;
+if(text && text.trim() !== ""){
+errorTipBadge.classList.add("has-text");
+  }else{
+errorTipBadge.classList.remove("has-text");
+  }
+}
+// ========== 新增：控制获取验证码按钮可用状态 ==========
+function updateGetCodeBtnState(){
+if(currentCountryCode !== "+86"){
+getCodeBtn.disabled = true;
+}else{
+getCodeBtn.disabled = false;
+}
+}
 // 自定义国家码组件
 const countryDisplay = document.getElementById("countryDisplay");
 const countryDropdown = document.getElementById("countryDropdown");
 const countryItems = document.querySelectorAll(".country-item");
 let currentCountryCode = "+86";
+// 初始化执行一次按钮状态
+updateGetCodeBtnState();
 // 滚动防抖计时器（滚动条自动隐藏）
 let scrollTimer = null;
 countryDropdown.addEventListener('scroll', function(){
@@ -688,20 +754,23 @@ item.addEventListener("click", ()=>{
 currentCountryCode = item.dataset.code;
 countryDisplay.textContent = currentCountryCode;
 countryDropdown.classList.remove("show");
+// 更新获取验证码按钮状态
+updateGetCodeBtnState();
 // ========== 新增逻辑：切换国家码触发效果 ==========
 if(currentCountryCode !== "+86"){
-// 非+86：晃动 + 粉色边框 + 输入框禁用 + 弹窗提示
+// 非+86：晃动 + 粉色边框 + 输入框禁用 +【改为下方文字提示，不再弹窗】
 countryDisplay.classList.add('error-border','shake-anim');
 phoneInput.disabled = true;
-openModal("当前仅支持中国大陆手机号");
+setErrorTip("*当前仅支持中国大陆手机号");
 // 动画执行完移除shake类，方便下次再次选择时还能触发晃动
 setTimeout(()=>{
 countryDisplay.classList.remove('shake-anim');
   },300);
 }else{
-// +86：清除错误样式，启用输入框
+// +86：清除错误样式，启用输入框，清空提示文字
 countryDisplay.classList.remove('error-border','shake-anim');
 phoneInput.disabled = false;
+setErrorTip("");
 }
 })
 })
@@ -717,13 +786,28 @@ clearIcon.style.display = "flex";
 clearIcon.style.display = "none";
     }
 }
-// 输入监听：过滤非数字 + 控制清除按钮显示 +【新增：输入合法自动移除粉色边框】
+// 【核心新增】控制国家码下拉框可用状态
+function toggleCountryCodeState(){
+const val = phoneInput.value.trim();
+if(val !== ""){
+// 输入框有内容：禁用国家码选择，清除错误边框
+countryDisplay.classList.add("disabled");
+countryDisplay.classList.remove("error-border");
+countryDropdown.classList.remove("show");
+}else{
+// 输入框为空：启用国家码选择
+countryDisplay.classList.remove("disabled");
+}
+}
+// 输入监听：过滤非数字 + 控制清除按钮显示 +【新增：输入合法自动移除粉色边框、清空提示】+ 控制国家码状态
 phoneInput.addEventListener('input', function(e) {
 this.value = this.value.replace(/\D/g, '');
 toggleClearIcon();
+toggleCountryCodeState();
 const val = this.value.trim();
 if(phoneReg.test(val)){
 this.classList.remove('error-border');
+setErrorTip(""); //输入正确清空提示
 }
 });
 // 粘贴拦截，过滤非数字并限制最多11位
@@ -733,15 +817,19 @@ const pasteText = (e.clipboardData || window.clipboardData).getData('text');
 const onlyNum = pasteText.replace(/\D/g,'');
 this.value = onlyNum.slice(0,11);
 toggleClearIcon();
+toggleCountryCodeState();
 const val = this.value.trim();
 if(phoneReg.test(val)){
 this.classList.remove('error-border');
+setErrorTip("");
 }
 })
 clearIcon.addEventListener('click', ()=>{
 phoneInput.value = "";
 toggleClearIcon();
+toggleCountryCodeState(); //清空后恢复国家码可点击
 phoneInput.focus();
+setErrorTip(""); //清空输入框同时清空提示
 })
 //滑块元素
 const slideModalMask = document.getElementById("slideModalMask");
@@ -814,7 +902,9 @@ const val = phoneInput.value.trim();
 const code = currentCountryCode;
 // ========= 删除原来的国家码判断，不再校验code是否+86 =========
 if(!phoneReg.test(val)){
-openModal("手机号格式不正确，请输入有效的11位中国大陆手机号");
+const msg = "*手机号格式不正确，请输入有效的11位中国大陆手机号";
+// openModal(msg); //注释掉此行，不再弹出弹窗
+setErrorTip(msg); //仅下方提示文字
 // 校验失败：添加粉色边框 + 晃动动画
 phoneInput.classList.add('error-border','shake-anim');
 setTimeout(()=>{
@@ -824,6 +914,7 @@ return;
 }
 // 校验通过，清除错误样式
 phoneInput.classList.remove('error-border','shake-anim');
+setErrorTip(""); //校验通过清空提示
 targetPhone = code + val;
 const records = getSmsRecords(targetPhone);
 if(records.length >=3){
