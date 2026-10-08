@@ -902,7 +902,7 @@ const val = phoneInput.value.trim();
 const code = currentCountryCode;
 // ========= 删除原来的国家码判断，不再校验code是否+86 =========
 if(!phoneReg.test(val)){
-const msg = "*手机号格式不正确，请输入有效的11位中国大陆手机号";
+const msg = "*请输入有效的11位中国大陆手机号";
 // openModal(msg); //注释掉此行，不再弹出弹窗
 setErrorTip(msg); //仅下方提示文字
 // 校验失败：添加粉色边框 + 晃动动画
