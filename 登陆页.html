@@ -3,535 +3,1019 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-<title>登录</title>
+<title>输入手机号</title>
 <style>
 * {
 margin: 0;
 padding: 0;
 box-sizing: border-box;
-font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
--webkit-tap-highlight-color: transparent;
-}
+font-family: system-ui, -apple-system, BlinkMacSystemFont, "PingFang SC", sans-serif;
+        }
 html, body {
-height: 100svh;
-overflow: hidden;
-}
+height: 100%;
+background-color: #d2d0cf;
+overflow-x: hidden;
+        }
 body {
-background:
-url('girl.png') center top / contain no-repeat,
-linear-gradient(160deg, #f8d2e0, #e1eaf8, #ffffff, #fce4ec);
-padding: 24px;
-padding-bottom: calc(24px + env(safe-area-inset-bottom));
-position: relative;
-}
-/* ========== 卡通小人：完全保留原样，大小、位置固定不动 ========== */
-body::before {
-content: "";
-position: absolute;
-left: 0;
-top: 0;
-width: 100%;
-height: 100%;
-background: url('girl.png') center top / contain no-repeat;
-pointer-events: none;
-z-index: 0;
-}
-.login-wrap {
-height: 100%;
-max-width: 420px;
-margin: 0 auto;
-position: relative;
-z-index: 1;
 display: flex;
 flex-direction: column;
-}
-.top-title {
-flex: 0 0 auto;
-}
-.close-btn {
-font-size: 32px;
-color: #d86898;
-text-decoration: none;
-margin-bottom: 16px;
-display:inline-block;
-}
-.title h1 {
-font-size: clamp(32px, 7vw, 56px);
-font-weight: 600;
-color: #222;
-line-height: 1.1;
-}
-.title p {
-font-size: clamp(16px,3vw,20px);
-color: #333;
-margin-top: 6px;
-}
-/* 中间空白占位，隔开小人与底部登录区，保证不会覆盖小人 */
-.space-gap{
-flex:1;
-min-height:120px;
-}
-/* ========== 仅底部登录区域做响应式，屏幕高度变化只缩放这一块 ========== */
-.login-content {
-flex:0 0 auto;
-}
-.phone-text {
-text-align: center;
-font-size: 20px;
-color: #222;
-font-weight: 500;
-margin-bottom: 15px;
-}
-.btn-onekey {
-width: 100%;
-padding:16px;
-border-radius: 999px;
-border: none;
-background: linear-gradient(90deg, #f06898, #f478a8);
-color: #fff;
-font-size:18px;
+        }
+/* 返回按钮：绝对定位，脱离文档流，不会挤压/覆盖下方页面内容 */
+.back-icon-wrap {
+position:absolute;
+top:40px;
+left:20px;
+z-index: 10;
+        }
+.back-btn {
+width: 36px;
+height: 36px;
+border-radius: 50%;
+border: 1px solid #cccccc;
 display: flex;
 align-items: center;
 justify-content: center;
-gap: 10px;
+background: #fff;
 cursor: pointer;
-margin-bottom: 20px;
-box-shadow: 0 10px 24px rgba(240, 88, 136, 0.28);
+        }
+.back-btn svg {
+width: 18px;
+height: 18px;
+fill: #666;
+        }
+.container{
+flex:1;
+padding: 0 32px;
+padding-top: 100px; /* 增加顶部内边距，避开左上角返回按钮区域 */
+        }
+.card-title {
+font-size: clamp(24px,5vw,36px); /* 动态等比例字号 */
+color: #ffffff;
+font-weight: 600;
+margin-bottom: 12px;
+        }
+.card-desc {
+font-size: clamp(14px,3vw,20px);
+color: #ffffff;
+opacity: 0.9;
+margin-bottom: 40px;
+white-space: nowrap; /* 强制单行 */
+overflow: hidden;
+text-overflow: ellipsis;
+        }
+/* =========【新增】合并外层容器，国家码+输入框放同一个白色框 ========= */
+.phone-group-wrap {
+width:100%;
+height:59px;
+display:flex;
+align-items:center;
+background:#fff;
+border-radius:8px;
+position:relative;
 }
-.btn-onekey:active{
-background: #f8b3c8 !important;
+/* 分割竖线 */
+.divider-line {
+width:1px;
+height:24px;
+background:#d2d0cf;
+flex-shrink:0;
 }
-.btn-onekey svg {
+.phone-input-wrap {
+margin-bottom: 8px;
+width:100%;
+}
+/* ========== 修改：错误提示行，取消自带颜色，用来放内联胶囊span ========== */
+.error-tip-line{
+width:100%;
+margin-bottom:24px;
+font-size:14px;
+min-height:20px;
+}
+/* ✅ 新增：白色胶囊提示，宽度跟随文字，胶囊圆角【已修复空文字消失】+单行自适应字号 */
+.error-tip-badge{
+display:inline-block;
+background:#ffffff;
+color:#ff6b81;
+border-radius:999px;
+padding:3px 12px;
+opacity:0;
+visibility:hidden;
+transition: all 0.2s ease;
+font-size: clamp(12px,2.5vw,14px);
+white-space: nowrap;
+overflow: hidden;
+text-overflow: ellipsis;
+max-width: 100%;
+}
+.error-tip-badge.has-text{
+opacity:1;
+visibility:visible;
+}
+/* ========== 自定义国家码下拉 | 圆角8px ========== */
+.country-code-wrap{
+position:relative;
+min-width:110px;
+height:100%;
+flex-shrink:0;
+}
+.country-display {
+width:100%;
+height: 100%;
+padding:0 12px;
+padding-right:30px;
+background:transparent; /* 透明！外层由phone-group-wrap提供白色背景 */
+font-size:20px;
+color:#222;
+border:none;
+outline:none;
+text-align:center;
+line-height:59px;
+cursor:pointer;
+transition: border 0.2s;
+}
+/* 禁用状态样式 */
+.country-display.disabled {
+cursor: not-allowed;
+opacity:0.75;
+pointer-events:none;
+}
+/* 粉色边框样式 移到外层phone-group-wrap */
+.phone-group-wrap.error-border {
+border: 2px solid #ff6b81;
+}
+/* 左右晃动动画 */
+@keyframes shake {
+0%,100% {transform: translateX(0);}
+20% {transform: translateX(-4px);}
+40% {transform: translateX(4px);}
+60% {transform: translateX(-4px);}
+80% {transform: translateX(4px);}
+}
+.shake-anim {
+animation: shake 0.3s ease-in-out;
+}
+.country-code-wrap::after{
+content:"▼";
+position:absolute;
+top:50%;
+transform:translateY(-50%);
+right:12px;
+font-size:14px;
+color:#666;
+pointer-events:none;
+}
+/* ========== 重点修改：下拉框4个圆角 + 滚动条动态显示 ========== */
+.country-dropdown{
+position:absolute;
+top:62px;
+left:0;
+width:240px;
+max-height:420px;
+overflow-y:auto;
+background:#fff;
+border-radius:16px; /* 四角圆弧 */
+box-shadow:0 4px 12px rgba(0,0,0,0.12);
+display:none;
+z-index:99;
+/* 滚动条基础 */
+scrollbar-width: thin;
+scrollbar-color: #ccc transparent;
+}
+.country-dropdown.show{
+display:block;
+}
+/* 滚动条样式 Webkit */
+.country-dropdown::-webkit-scrollbar {
+width: 6px;
+}
+.country-dropdown::-webkit-scrollbar-track {
+background: transparent;
+}
+.country-dropdown::-webkit-scrollbar-thumb {
+background: transparent;
+border-radius: 3px;
+transition: background 0.3s;
+}
+.country-dropdown.scroll-active::-webkit-scrollbar-thumb {
+background: #cccccc;
+}
+.country-group-title{
+padding:8px 12px;
+font-size:15px;
+color:#888;
+background:#f7f7f7;
+position:sticky;
+top:0;
+}
+.country-item{
+padding:10px 12px;
+padding-left:20px;
+font-size:16px;
+cursor:pointer;
+}
+.country-item:hover{
+background:#f3f3f3;
+}
+/* ====================================== */
+/* 手机号输入框外层容器，用来放手机图标 + 清除按钮 */
+.phone-input-box{
+position:relative;
+flex:1;
+height:100%;
+}
+/* 手机SVG图标 #d2d0cf */
+.phone-icon{
+position:absolute;
+left:20px;
+top:50%;
+transform:translateY(-50%);
+width:20px;
+height:20px;
+fill:#d2d0cf;
+pointer-events:none;
+}
+/* 清除按钮 */
+.clear-icon{
+position:absolute;
+right:16px;
+top:50%;
+transform:translateY(-50%);
+width:24px;
+height:24px;
+border-radius:50%;
+background:#d2d0cf;
+display:none;
+align-items:center;
+justify-content:center;
+cursor:pointer;
+z-index:2;
+}
+.clear-icon svg{
+width:14px;
+height:14px;
+fill:#fff;
+}
+/* 手机号输入框：背景透明，去掉边框，整体背景交给外层phone-group-wrap */
+.phone-input {
+width:100%;
+height: 100%;
+border-radius:0;
+border: none;
+font-size: 20px;
+padding: 0 52px 0 48px;
+outline: none;
+background: transparent;
+min-width:0;
+transition: border 0.2s;
+}
+.phone-input:disabled {
+background:transparent;
+color:#999;
+cursor:not-allowed;
+}
+.get-code-btn {
+width: 100%;
+height: 48px;
+border-radius: 999px;
+border: none;
+font-size: 18px;
+color: #b8b8b8;
+background: #ffffff;
+cursor: pointer;
+transition: all 0.2s;
+margin-top:8px;
+}
+.get-code-btn:disabled {
+opacity: 0.7;
+cursor: not-allowed;
+}
+/*==== 半透明提示弹窗（无底部确认按钮，3秒自动消失）====*/
+.modal-mask {
+position: fixed;
+top: 0;
+left: 0;
+right: 0;
+bottom: 0;
+background: rgba(255,182,193,0.35); /*粉色半透明遮罩【修改】 */
+z-index: 200;
+display: none;
+align-items: center;
+justify-content: center;
+}
+.modal-wrap {
+width: auto;
+max-width: 320px;
+background: rgb(255, 170, 186); /* 粉色半透明弹窗面板【修改】 */
+border-radius: 12px;
+overflow: hidden;
+padding:16px 24px;
+}
+.modal-body {
+text-align: center;
+}
+.modal-msg-text {
+font-size:17px;
+font-weight:500;
+color:#ffffff;
+}
+.modal-footer {
+display:none;
+}
+.modal-mask.show{
+display:flex;
+}
+/*滑块验证弹窗【遮罩改为粉色半透明】*/
+.slide-modal-mask {
+position: fixed;
+top: 0;
+left: 0;
+right: 0;
+bottom: 0;
+background: rgba(255,182,193,0.35); /*粉色半透明遮罩【修改】*/
+z-index: 210;
+display: none;
+align-items: center;
+justify-content: center;
+}
+.slide-modal-wrap{
+width:320px;
+background:#fff;
+border-radius:16px;
+overflow:hidden;
+}
+.slide-modal-body{
+padding:24px 20px;
+}
+.slide-title{
+text-align:center;
+font-size:18px;
+color:#222;
+margin-bottom:20px;
+}
+.slide-box{
+width:100%;
+height:44px;
+background:#e8e8e8;
+border-radius:22px;
+position:relative;
+overflow:hidden;
+touch-action:none;
+}
+.slide-progress{
+position:absolute;
+left:0;
+top:0;
+height:100%;
+background:#409eff;
+width:0%;
+}
+.slide-btn{
+width:44px;
+height:44px;
+border-radius:50%;
+background:#fff;
+box-shadow:0 0 3px #999;
+position:absolute;
+top:0;
+left:0;
+cursor:grab;
+display:flex;
+align-items:center;
+justify-content:center;
+font-weight:bold;
+user-select:none;
+}
+.slide-tip{
+text-align:center;
+margin-top:16px;
+color:#666;
+font-size:14px;
+}
+.slide-modal-mask.show{
+display:flex;
+}
+/* 适配手机小屏 */
+@media (max-width: 480px) {
+.container{
+padding: 0 20px;
+padding-top: 90px; /* 小屏保持足够顶部距离，避开返回按钮 */
+}
+.card-desc{
+margin-bottom:28px;
+}
+.phone-input-wrap{
+margin-bottom:8px;
+}
+.error-tip-line{
+margin-bottom:20px;
+}
+/* 小屏下胶囊字号再缩小 */
+.error-tip-badge{
+font-size: clamp(11px,3vw,12px);
+padding:2px 10px;
+}
+.phone-group-wrap{
+height:48px;
+}
+.country-code-wrap{
+min-width:90px;
+height:100%;
+}
+.country-display{
+height:100%;
+font-size:16px;
+line-height:48px;
+}
+.phone-group-wrap.error-border {
+border: 2px solid #ff6b81;
+}
+.country-dropdown{
+width:220px;
+}
+.phone-input-box{
+height:100%;
+}
+.phone-input{
+height:100%;
+font-size:16px;
+padding:0 44px 0 42px;
+}
+.phone-input:disabled {
+background:transparent;
+}
+.phone-icon{
+left:16px;
+width:18px;
+height:18px;
+}
+.clear-icon{
+right:12px;
 width:22px;
 height:22px;
 }
-.link-code-wrap{
-text-align:center;
-margin-bottom: 36px;
+.clear-icon svg{
+width:12px;
+height:12px;
 }
-.link-code {
-display: inline-block;
-font-size:17px;
-color: #444;
-text-decoration: none;
-cursor:pointer;
-padding:4px 8px;
-border-radius:8px;
-}
-.link-code:active{
-background: rgba(0,0,0,0.06);
-}
-.other-title {
-display: flex;
-align-items: center;
-color: #777;
+.get-code-btn{
+height:44px;
 font-size:16px;
-gap: 14px;
-margin-bottom: 28px;
+margin-top:8px;
 }
-.other-title::before,
-.other-title::after {
-content: "";
-flex: 1;
-height: 1px;
-background: #ccc;
+.divider-line{
+height:20px;
 }
-.social-row {
-display: flex;
-justify-content: center;
-gap:36px;
-margin-bottom: 32px;
-}
-.social-item {
-width:60px;
-height:60px;
-border-radius: 999px;
-display: flex;
-align-items: center;
-justify-content: center;
-font-size: 26px;
-color: #fff;
-cursor:pointer;
-}
-.wx {
-background: url('wechat.png') center / contain no-repeat;
-background-color: transparent;
-}
-.qq {
-background: url('qq.png') center / contain no-repeat;
-background-color: transparent;
-}
-.apple {
-background: url('apple.png') center / contain no-repeat;
-background-color: transparent;
-}
-/* ========= 协议行修改：单行不换行，字体自适应，复选框禁止变形 ========= */
-.agree-box {
-display: flex;
-align-items: center;
-justify-content: center;
-gap: 8px;
-font-size: clamp(11px,3.2vw,15px);
-color: #666;
-line-height: 1.4;
-margin-bottom: 10px;
-white-space: nowrap;
-overflow: hidden;
-}
-.agree-box a {
-color: #f06898;
-text-decoration: none;
-cursor:pointer;
-}
-.agree-box input[type="checkbox"] {
-appearance: none;
--webkit-appearance: none;
-width: 18px;
-height: 18px;
-border: 1px solid #999;
-border-radius: 50%;
-outline: none;
-margin-top: 0;
-position: relative;
-cursor: pointer;
-flex-shrink: 0; /* 关键：禁止复选框压缩变形，永远保持18px正圆 */
-}
-.agree-box input[type="checkbox"]:checked::after {
-content: "";
-width: 9px;
-height: 9px;
-background-color: #f06898;
-border-radius: 50%;
-position: absolute;
-top: 50%;
-left: 50%;
-transform: translate(-50%, -50%);
-}
-/* ===== 屏幕高度变小时，只压缩底部登录区域样式，小人完全不受影响 ===== */
-@media (max-height: 740px) {
-.phone-text { font-size: 24px; margin-bottom: 12px; }
-.btn-onekey { padding:13px; font-size:16px; margin-bottom:16px; }
-.link-code { font-size:15px; }
-.link-code-wrap { margin-bottom:28px; }
-.other-title { font-size:14px; margin-bottom:20px; }
-.social-item { width:52px;height:52px; }
-.social-row { gap:28px;margin-bottom:24px; }
-}
-@media (max-height: 660px) {
-.phone-text { font-size: 22px; margin-bottom: 10px; }
-.btn-onekey { padding:11px; font-size:15px; margin-bottom:14px; }
-.link-code { font-size:14px; }
-.link-code-wrap { margin-bottom:22px; }
-.other-title { font-size:13px; margin-bottom:16px; }
-.social-item { width:48px;height:48px; }
-.social-row { gap:24px;margin-bottom:20px; }
-}
-@media (max-height: 580px) {
-.phone-text { font-size: 20px; margin-bottom: 8px; }
-.btn-onekey { padding:10px; font-size:14px; margin-bottom:12px; }
-.link-code { font-size:13px; }
-.link-code-wrap { margin-bottom:18px; }
-.other-title { font-size:12px; margin-bottom:14px; }
-.social-item { width:44px;height:44px; }
-.social-row { gap:20px;margin-bottom:16px; }
-}
-/* 弹窗样式 */
-.toast {
-position: fixed;
-left: 50%;
-top: 50%;
-transform: translate(-50%, -50%);
-background-color: rgba(0,0,0,0.65);
-color: #fff;
-padding: 16px 24px;
-border-radius: 12px;
-font-size:16px;
-z-index:9999;
-display:none;
-max-width:80%;
-text-align:center;
-}
-.modal-mask{
-position:fixed;
-inset:0;
-background:rgba(0,0,0,0.55);
-z-index:10000;
-display:none;
-align-items:center;
-justify-content:center;
-padding:20px;
-}
-.modal-box{
-width:100%;
-max-width:360px;
-background:#fff;
-border-radius:16px;
-overflow:hidden;
-position:relative;
-}
-.modal-close{
-position:absolute;
-right:16px;
-top:14px;
-font-size:24px;
-color:#666;
-cursor:pointer;
-}
-.modal-header{
-padding:16px;
-text-align:center;
-font-size:18px;
-font-weight:bold;
-border-bottom:1px solid #eee;
-}
-.modal-body{
-padding:20px 16px;
-min-height:160px;
-font-size:15px;
-color:#444;
-}
-.modal-footer{
-display:flex;
-gap:12px;
-padding:16px;
-}
-.modal-footer button{
-flex:1;
-padding:12px 0;
-border-radius:999px;
-border:none;
-font-size:16px;
-cursor:pointer;
-}
-.btn-accept{
-background:#f06898;
-color:#fff;
-}
-.btn-accept:disabled{
-background:#f8b3c8;
-cursor:not-allowed;
-}
-.btn-refuse{
-background:#eee;
-color:#333;
-}
-.alert-mask{
-position:fixed;
-inset:0;
-background:rgba(0,0,0,0.55);
-z-index:10001;
-display:none;
-align-items:center;
-justify-content:center;
-padding:20px;
-}
-.alert-box{
-width:100%;
-max-width:340px;
-background:#fff;
-border-radius:16px;
-overflow:hidden;
-}
-.alert-body{
-padding:24px 20px;
-font-size:16px;
-color:#333;
-line-height:1.6;
-}
-.alert-footer{
-display:flex;
-gap:12px;
-padding:0 20px 20px;
-}
-.alert-footer button{
-flex:1;
-padding:12px 0;
-border-radius:999px;
-border:none;
-font-size:16px;
-cursor:pointer;
-}
-.alert-confirm{
-background:#f06898;
-color:#fff;
-}
-.alert-cancel{
-background:#eee;
-color:#333;
 }
 </style>
 </head>
 <body>
-<div class="login-wrap">
-<div class="top-title">
-<a href="#" class="close-btn">×</a>
-<div class="title">
-<h1>Hello!</h1>
-<p>欢迎来到潮汐日记</p>
-</div>
-</div>
-<!-- 空白间隔，固定隔开卡通人物和底部登录区，防止覆盖 -->
-<div class="space-gap"></div>
-<!-- 底部登录区：仅这一块做屏幕高度自适应 -->
-<div class="login-content">
-<div class="phone-text">手机号码获取中...</div>
-<button class="btn-onekey" id="btnOneKey">
+<div class="back-icon-wrap">
+<div class="back-btn" id="backBtn">
 <svg viewBox="0 0 24 24">
-<rect x="4.5" y="1.5" width="15" height="21" rx="4" ry="4" fill="none" stroke="#ffffff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
-<line x1="12" y1="19" x2="12" y2="19" stroke="#ffffff" stroke-width="1.8" stroke-linecap="round"/>
+<path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z" />
 </svg>
-<span>本机号码一键登录</span>
-</button>
-<div class="link-code-wrap">
-<span class="link-code" id="linkCode">手机验证码登录 &gt;</span>
-</div>
-<div class="other-title">其他登录方式</div>
-<div class="social-row">
-<div class="social-item wx" id="wxLogin"></div>
-<div class="social-item qq" id="qqLogin"></div>
-<div class="social-item apple" id="appleLogin"></div>
-</div>
-<div class="agree-box">
-<input type="checkbox" id="agreeCheck" />
-<label for="agreeCheck">
-                我已阅读并同意<a class="protocol-link" data-title="用户协议">用户协议</a>、<a class="protocol-link" data-title="隐私政策">隐私政策</a>、<a class="protocol-link" data-title="认证服务条款">认证服务条款</a>
-</label>
 </div>
 </div>
+<div class="container">
+<div class="card-title">输入你的手机号</div>
+<div class="card-desc">请输入你的手机号，点击获取验证码完成验证</div>
+<div class="phone-input-wrap">
+    <!-- 【HTML改动：外层统一容器，国家码 | 分割线 | 输入框 -->
+    <div class="phone-group-wrap" id="phoneGroupWrap">
+        <div class="country-code-wrap">
+            <div class="country-display" id="countryDisplay">+86</div>
+            <div class="country-dropdown" id="countryDropdown">
+                <div class="country-group-title">中国地区</div>
+                <div class="country-item" data-code="+86">中国大陆 +86</div>
+                <div class="country-item" data-code="+852">中国香港 +852</div>
+                <div class="country-item" data-code="+853">中国澳门 +853</div>
+                <div class="country-item" data-code="+886">中国台湾 +886</div>
+                <div class="country-group-title">亚洲地区</div>
+                <div class="country-item" data-code="+93">阿富汗 +93</div>
+                <div class="country-item" data-code="+92">巴基斯坦 +92</div>
+                <div class="country-item" data-code="+91">印度 +91</div>
+                <div class="country-item" data-code="+880">孟加拉国 +880</div>
+                <div class="country-item" data-code="+94">斯里兰卡 +94</div>
+                <div class="country-item" data-code="+960">马尔代夫 +960</div>
+                <div class="country-item" data-code="+977">尼泊尔 +977</div>
+                <div class="country-item" data-code="+975">不丹 +975</div>
+                <div class="country-item" data-code="+95">缅甸 +95</div>
+                <div class="country-item" data-code="+66">泰国 +66</div>
+                <div class="country-item" data-code="+856">老挝 +856</div>
+                <div class="country-item" data-code="+855">柬埔寨 +855</div>
+                <div class="country-item" data-code="+84">越南 +84</div>
+                <div class="country-item" data-code="+60">马来西亚 +60</div>
+                <div class="country-item" data-code="+65">新加坡 +65</div>
+                <div class="country-item" data-code="+673">文莱 +673</div>
+                <div class="country-item" data-code="+62">印度尼西亚 +62</div>
+                <div class="country-item" data-code="+63">菲律宾 +63</div>
+                <div class="country-item" data-code="+670">东帝汶 +670</div>
+                <div class="country-item" data-code="+976">蒙古 +976</div>
+                <div class="country-item" data-code="+82">韩国 +82</div>
+                <div class="country-item" data-code="+850">朝鲜 +850</div>
+                <div class="country-item" data-code="+81">日本 +81</div>
+                <div class="country-item" data-code="+997">哈萨克斯坦（新） +997</div>
+                <div class="country-item" data-code="+7">哈萨克斯坦（旧） +7</div>
+                <div class="country-item" data-code="+996">吉尔吉斯斯坦 +996</div>
+                <div class="country-item" data-code="+992">塔吉克斯坦 +992</div>
+                <div class="country-item" data-code="+998">乌兹别克斯坦 +998</div>
+                <div class="country-item" data-code="+993">土库曼斯坦 +993</div>
+                <div class="country-item" data-code="+995">格鲁吉亚 +995</div>
+                <div class="country-item" data-code="+374">亚美尼亚 +374</div>
+                <div class="country-item" data-code="+994">阿塞拜疆 +994</div>
+                <div class="country-item" data-code="+966">沙特阿拉伯 +966</div>
+                <div class="country-item" data-code="+973">巴林 +973</div>
+                <div class="country-item" data-code="+974">卡塔尔 +974</div>
+                <div class="country-item" data-code="+965">科威特 +965</div>
+                <div class="country-item" data-code="+971">阿联酋 +971</div>
+                <div class="country-item" data-code="+968">阿曼 +968</div>
+                <div class="country-item" data-code="+967">也门 +967</div>
+                <div class="country-item" data-code="+962">约旦 +962</div>
+                <div class="country-item" data-code="+961">黎巴嫩 +961</div>
+                <div class="country-item" data-code="+963">叙利亚 +963</div>
+                <div class="country-item" data-code="+964">伊拉克 +964</div>
+                <div class="country-item" data-code="+98">伊朗 +98</div>
+                <div class="country-item" data-code="+972">以色列 +972</div>
+                <div class="country-item" data-code="+970">巴勒斯坦 +970</div>
+                <div class="country-item" data-code="+90">土耳其 +90</div>
+                <div class="country-item" data-code="+357">塞浦路斯 +357</div>
+                <div class="country-group-title">欧洲地区</div>
+                <div class="country-item" data-code="+7">俄罗斯 +7</div>
+                <div class="country-item" data-code="+47">挪威 +47</div>
+                <div class="country-item" data-code="+46">瑞典 +46</div>
+                <div class="country-item" data-code="+45">丹麦 +45</div>
+                <div class="country-item" data-code="+358">芬兰 +358</div>
+                <div class="country-item" data-code="+44">英国 +44</div>
+                <div class="country-item" data-code="+353">爱尔兰 +353</div>
+                <div class="country-item" data-code="+33">法国 +33</div>
+                <div class="country-item" data-code="+49">德国 +49</div>
+                <div class="country-item" data-code="+31">荷兰 +31</div>
+                <div class="country-item" data-code="+32">比利时 +32</div>
+                <div class="country-item" data-code="+34">西班牙 +34</div>
+                <div class="country-item" data-code="+351">葡萄牙 +351</div>
+                <div class="country-item" data-code="+39">意大利 +39</div>
+                <div class="country-item" data-code="+41">瑞士 +41</div>
+                <div class="country-item" data-code="+43">奥地利 +43</div>
+                <div class="country-item" data-code="+30">希腊 +30</div>
+                <div class="country-item" data-code="+48">波兰 +48</div>
+                <div class="country-item" data-code="+420">捷克 +420</div>
+                <div class="country-item" data-code="+36">匈牙利 +36</div>
+                <div class="country-item" data-code="+40">罗马尼亚 +40</div>
+                <div class="country-item" data-code="+359">保加利亚 +359</div>
+                <div class="country-item" data-code="+381">塞尔维亚 +381</div>
+                <div class="country-item" data-code="+385">克罗地亚 +385</div>
+                <div class="country-item" data-code="+386">斯洛文尼亚 +386</div>
+                <div class="country-item" data-code="+387">波斯尼亚 +387</div>
+                <div class="country-item" data-code="+382">黑山 +382</div>
+                <div class="country-item" data-code="+389">北马其顿 +389</div>
+                <div class="country-item" data-code="+355">阿尔巴尼亚 +355</div>
+                <div class="country-item" data-code="+376">安道尔 +376</div>
+                <div class="country-item" data-code="+423">列支敦士登 +423</div>
+                <div class="country-item" data-code="+352">卢森堡 +352</div>
+                <div class="country-item" data-code="+356">马耳他 +356</div>
+                <div class.country-item" data-code="+354">冰岛 +354</div>
+                <div class="country-item" data-code="+372">爱沙尼亚 +372</div>
+                <div class="country-item" data-code="+371">拉脱维亚 +371</div>
+                <div class="country-item" data-code="+370">立陶宛 +370</div>
+                <div class="country-item" data-code="+375">白俄罗斯 +375</div>
+                <div class="country-item" data-code="+380">乌克兰 +380</div>
+                <div class="country-item" data-code="+373">摩尔多瓦 +373</div>
+                <div class="country-group-title">北美洲地区</div>
+                <div class="country-item" data-code="+1">美国 +1</div>
+                <div class="country-item" data-code="+1">加拿大 +1</div>
+                <div class="country-item" data-code="+1787">波多黎各 +1 787</div>
+                <div class="country-item" data-code="+1340">美属维尔京群岛 +1 340</div>
+                <div class="country-item" data-code="+1671">关岛 +1 671</div>
+                <div class="country-item" data-code="+1684">美属萨摩亚 +1 684</div>
+                <div class="country-group-title">南美洲地区</div>
+                <div class="country-item" data-code="+55">巴西 +55</div>
+                <div class="country-item" data-code="+54">阿根廷 +54</div>
+                <div class="country-item" data-code="+56">智利 +56</div>
+                <div class="country-item" data-code="+51">秘鲁 +51</div>
+                <div class="country-item" data-code="+57">哥伦比亚 +57</div>
+                <div class="country-item" data-code="+58">委内瑞拉 +58</div>
+                <div class="country-item" data-code="+506">哥斯达黎加 +506</div>
+                <div class="country-item" data-code="+507">巴拿马 +507</div>
+                <div class="country-item" data-code="+503">萨尔瓦多 +503</div>
+                <div class="country-item" data-code="+504">洪都拉斯 +504</div>
+                <div class="country-item" data-code="+505">尼加拉瓜 +505</div>
+                <div class="country-item" data-code="+502">危地马拉 +502</div>
+                <div class="country-item" data-code="+501">伯利兹 +501</div>
+                <div class="country-item" data-code="+52">墨西哥 +52</div>
+                <div class="country-group-title">非洲地区</div>
+                <div class="country-item" data-code="+20">埃及 +20</div>
+                <div class="country-item" data-code="+218">利比亚 +218</div>
+                <div class="country-item" data-code="+216">突尼斯 +216</div>
+                <div class="country-item" data-code="+213">阿尔及利亚 +213</div>
+                <div class="country-item" data-code="+212">摩洛哥 +212</div>
+                <div class="country-item" data-code="+249">苏丹 +249</div>
+                <div class="country-item" data-code="+211">南苏丹 +211</div>
+                <div class="country-item" data-code="+251">埃塞俄比亚 +251</div>
+                <div class="country-item" data-code="+252">索马里 +252</div>
+                <div class="country-item" data-code="+253">吉布提 +253</div>
+                <div class="country-item" data-code="+254">肯尼亚 +254</div>
+                <div class="country-item" data-code="+255">坦桑尼亚 +255</div>
+                <div class="country-item" data-code="+256">乌干达 +256</div>
+                <div class="country-item" data-code="+250">卢旺达 +250</div>
+                <div class="country-item" data-code="+257">布隆迪 +257</div>
+                <div class="country-item" data-code="+243">刚果（金） +243</div>
+                <div class="country-item" data-code="+242">刚果（布） +242</div>
+                <div class="country-item" data-code="+241">加蓬 +241</div>
+                <div class="country-item" data-code="+236">中非 +236</div>
+                <div class="country-item" data-code="+237">喀麦隆 +237</div>
+                <div class="country-item" data-code="+235">乍得 +235</div>
+                <div class="country-item" data-code="+240">赤道几内亚 +240</div>
+                <div class="country-item" data-code="+239">圣多美和普林西比 +239</div>
+                <div class="country-item" data-code="+234">尼日利亚 +234</div>
+                <div class="country-item" data-code="+229">贝宁 +229</div>
+                <div class="country-item" data-code="+228">多哥 +228</div>
+                <div class="country-item" data-code="+233">加纳 +233</div>
+                <div class="country-item" data-code="+225">科特迪瓦 +225</div>
+                <div class="country-item" data-code="+226">布基纳法索 +226</div>
+                <div class="country-item" data-code="+223">马里 +223</div>
+                <div class="country-item" data-code="+221">塞内加尔 +221</div>
+                <div class="country-item" data-code="+220">冈比亚 +220</div>
+                <div class="country-item" data-code="+224">几内亚 +224</div>
+                <div class="country-item" data-code="+245">几内亚比绍 +245</div>
+                <div class="country-item" data-code="+232">塞拉利昂 +232</div>
+                <div class="country-item" data-code="+231">利比里亚 +231</div>
+                <div class="country-item" data-code="+222">毛里塔尼亚 +222</div>
+                <div class="country-item" data-code="+227">尼日尔 +227</div>
+                <div class="country-item" data-code="+238">佛得角 +238</div>
+                <div class="country-item" data-code="+248">塞舌尔 +248</div>
+                <div class="country-item" data-code="+230">毛里求斯 +230</div>
+                <div class="country-item" data-code="+269">科摩罗 +269</div>
+                <div class="country-item" data-code="+261">马达加斯加 +261</div>
+                <div class="country-item" data-code="+27">南非 +27</div>
+                <div class="country-item" data-code="+267">博茨瓦纳 +267</div>
+                <div class="country-item" data-code="+266">莱索托 +266</div>
+                <div class="country-item" data-code="+268">斯威士兰 +268</div>
+                <div class="country-item" data-code="+263">津巴布韦 +263</div>
+                <div class="country-item" data-code="+260">赞比亚 +260</div>
+                <div class="country-item" data-code="+265">马拉维 +265</div>
+                <div class="country-item" data-code="+258">莫桑比克 +258</div>
+                <div class="country-item" data-code="+244">安哥拉 +244</div>
+                <div class="country-group-title">大洋洲地区</div>
+                <div class="country-item" data-code="+61">澳大利亚 +61</div>
+                <div class="country-item" data-code="+64">新西兰 +64</div>
+                <div class="country-item" data-code="+675">巴布亚新几内亚 +675</div>
+                <div class="country-item" data-code="+677">所罗门群岛 +677</div>
+                <div class="country-item" data-code="+678">瓦努阿图 +678</div>
+                <div class="country-item" data-code="+679">斐济 +679</div>
+                <div class="country-item" data-code="+676">汤加 +676</div>
+                <div class="country-item" data-code="+685">萨摩亚 +685</div>
+                <div class="country-item" data-code="+682">库克群岛 +682</div>
+                <div class="country-item" data-code="+683">纽埃 +683</div>
+                <div class="country-item" data-code="+686">基里巴斯 +686</div>
+                <div class="country-item" data-code="+688">图瓦卢 +688</div>
+                <div class="country-item" data-code="+692">马绍尔群岛 +692</div>
+                <div class="country-item" data-code="+691">密克罗尼西亚 +691</div>
+                <div class="country-item" data-code="+680">帕劳 +680</div>
+            </div>
+        </div>
+        <!-- 竖线分割 -->
+        <div class="divider-line"></div>
+        <div class="phone-input-box">
+            <!-- SVG手机图标，颜色#d2d0cf -->
+            <svg class="phone-icon" viewBox="0 0 24 24">
+            <path d="M17 1H7c-1.1 0-2 .9-2 2v18c0 1.1.9 2 2 2h10c1.1 0 2-.9 2-2V3c0-1.1-.9-2-2-2zm0 18H7V5h10v14z"/>
+            </svg>
+            <!-- 清除按钮 -->
+            <div class="clear-icon" id="clearIcon">
+            <svg viewBox="0 0 24 24">
+            <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+            </svg>
+            </div>
+            <input class="phone-input" id="phoneInput" placeholder="请输入手机号" maxlength="11" type="tel" />
+        </div>
+    </div>
 </div>
-<div class="toast" id="toastBox"></div>
-<div class="modal-mask" id="protocolModal">
-<div class="modal-box">
-<span class="modal-close" id="modalClose">×</span>
-<div class="modal-header" id="modalTitle">用户协议</div>
-<div class="modal-body" id="modalBody">协议内容</div>
+<!-- ✅修改：错误提示行，内部放span胶囊 -->
+<div class="error-tip-line" id="errorTip"><span class="error-tip-badge"></span></div>
+<button class="get-code-btn" id="getCodeBtn">获取验证码</button>
+</div>
+<!--普通提示弹窗（已移除确认按钮）-->
+<div class="modal-mask" id="modalMask">
+<div class="modal-wrap">
+<div class="modal-body">
+<div class="modal-msg-text" id="modalMsg"></div>
+</div>
 <div class="modal-footer">
-<button class="btn-accept" id="acceptBtn">同意并接受(10s)</button>
-<button class="btn-refuse" id="refuseBtn">不同意</button>
+<button class="modal-confirm-btn" id="modalOkBtn">确定</button>
 </div>
 </div>
 </div>
-<div class="alert-mask" id="alertModal">
-<div class="alert-box">
-<div class="alert-body" id="alertText"></div>
-<div class="alert-footer">
-<button class="alert-confirm" id="alertConfirmBtn">确认</button>
-<button class="alert-cancel" id="alertCancelBtn">取消</button>
+<!--滑块人机验证弹窗-->
+<div class="slide-modal-mask" id="slideModalMask">
+<div class="slide-modal-wrap">
+<div class="slide-modal-body">
+<div class="slide-title">人机验证</div>
+<div class="slide-box" id="slideBox">
+<div class="slide-progress" id="slideProgress"></div>
+<div class="slide-btn" id="slideBtn">→</div>
+</div>
+<div class="slide-tip" id="slideTip">请拖动滑块完成验证</div>
 </div>
 </div>
 </div>
 <script>
-const toastBox = document.getElementById('toastBox');
-const protocolModal = document.getElementById('protocolModal');
-const modalTitle = document.getElementById('modalTitle');
-const modalBody = document.getElementById('modalBody');
-const acceptBtn = document.getElementById('acceptBtn');
-const refuseBtn = document.getElementById('refuseBtn');
-const modalClose = document.getElementById('modalClose');
-const agreeCheck = document.getElementById('agreeCheck');
-const alertModal = document.getElementById('alertModal');
-const alertText = document.getElementById('alertText');
-const alertConfirmBtn = document.getElementById('alertConfirmBtn');
-const alertCancelBtn = document.getElementById('alertCancelBtn');
-let timer = null;
-let currentProtocolName = '';
-const protocolList = ["用户协议", "隐私政策", "认证服务条款"];
-let agreeState = {
-"用户协议": false,
-"隐私政策": false,
-"认证服务条款": false
-};
-function showToast(msg, duration){
-toastBox.innerText = msg;
-toastBox.style.display = "block";
-setTimeout(()=>{toastBox.style.display = "none";},duration)
+const phoneInput = document.getElementById('phoneInput');
+const getCodeBtn = document.getElementById('getCodeBtn');
+const modalMask = document.getElementById("modalMask");
+const modalMsg = document.getElementById("modalMsg");
+const modalOkBtn = document.getElementById("modalOkBtn");
+const backBtn = document.getElementById("backBtn");
+const clearIcon = document.getElementById("clearIcon");
+const errorTip = document.getElementById("errorTip");
+const errorTipBadge = errorTip.querySelector('.error-tip-badge'); //获取胶囊span
+const phoneGroupWrap = document.getElementById("phoneGroupWrap");
+// 设置提示函数，统一控制胶囊显示隐藏
+function setErrorTip(text){
+errorTipBadge.innerText = text;
+if(text && text.trim() !== ""){
+errorTipBadge.classList.add("has-text");
+  }else{
+errorTipBadge.classList.remove("has-text");
+  }
 }
-function getUnAgreeProtocolList(){
-return protocolList.filter(item=>!agreeState[item]);
-}
-function openProtocolModal(titleText){
-currentProtocolName = titleText;
-modalTitle.innerText = titleText;
-modalBody.innerText = titleText + " 协议内容";
-protocolModal.style.display = 'flex';
-if(agreeState[titleText]){
-acceptBtn.innerText = "您已同意并接受";
-acceptBtn.disabled = true;
-    }else{
-acceptBtn.disabled = true;
-let count = 10;
-acceptBtn.innerText = `同意并接受(${count}s)`;
-if(timer) clearInterval(timer);
-timer = setInterval(()=>{
-count--;
-acceptBtn.innerText = `同意并接受(${count}s)`;
-if(count <= 0){
-clearInterval(timer);
-acceptBtn.innerText = "同意并接受";
-acceptBtn.disabled = false;
-            }
-        },1000);
-    }
-}
-function closeProtocolModal(){
-protocolModal.style.display = 'none';
-if(timer) clearInterval(timer);
-}
-document.getElementById('btnOneKey').addEventListener('click',()=>showToast("本机号码一键登陆功能，正在开发中",3000));
-document.getElementById('wxLogin').addEventListener('click',()=>showToast("微信登陆功能，正在开发中",3000));
-document.getElementById('qqLogin').addEventListener('click',()=>showToast("QQ登陆功能，正在开发中",3000));
-document.getElementById('appleLogin').addEventListener('click',()=>showToast("APPLE ID 登陆该功能，正在开发中",3000));
-document.getElementById('linkCode').addEventListener('click',()=>{
-if(!agreeCheck.checked){
-showToast("如需继续使用本软件请阅读并同意【用户协议、隐私政策、认证服务条款】，否则无法继续使用",5000);
+// ========== 新增：控制获取验证码按钮可用状态 ==========
+function updateGetCodeBtnState(){
+if(currentCountryCode !== "+86"){
+getCodeBtn.disabled = true;
 }else{
-window.location.href = "手机号输入页.html";
+getCodeBtn.disabled = false;
+}
+}
+// 自定义国家码组件
+const countryDisplay = document.getElementById("countryDisplay");
+const countryDropdown = document.getElementById("countryDropdown");
+const countryItems = document.querySelectorAll(".country-item");
+let currentCountryCode = "+86";
+// 初始化执行一次按钮状态
+updateGetCodeBtnState();
+// 滚动防抖计时器（滚动条自动隐藏）
+let scrollTimer = null;
+countryDropdown.addEventListener('scroll', function(){
+this.classList.add('scroll-active');
+clearTimeout(scrollTimer);
+scrollTimer = setTimeout(()=>{
+this.classList.remove('scroll-active');
+  }, 600);
+})
+// 点击展开下拉
+countryDisplay.addEventListener("click", (e)=>{
+e.stopPropagation();
+countryDropdown.classList.toggle("show");
+})
+// 点击选项选中
+countryItems.forEach(item=>{
+item.addEventListener("click", ()=>{
+currentCountryCode = item.dataset.code;
+countryDisplay.textContent = currentCountryCode;
+countryDropdown.classList.remove("show");
+// 更新获取验证码按钮状态
+updateGetCodeBtnState();
+// ========== 新增逻辑：切换国家码触发效果 ==========
+if(currentCountryCode !== "+86"){
+// 非+86：晃动 + 外层粉色边框 + 输入框禁用 +【改为下方文字提示，不再弹窗】
+phoneGroupWrap.classList.add('error-border','shake-anim');
+phoneInput.disabled = true;
+setErrorTip("*当前仅支持中国大陆手机号");
+// 动画执行完移除shake类，方便下次再次选择时还能触发晃动
+setTimeout(()=>{
+phoneGroupWrap.classList.remove('shake-anim');
+  },300);
+}else{
+// +86：清除错误样式，启用输入框，清空提示文字
+phoneGroupWrap.classList.remove('error-border','shake-anim');
+phoneInput.disabled = false;
+setErrorTip("");
 }
 })
-document.querySelectorAll('.protocol-link').forEach(item=>{
-item.addEventListener('click', function(e){
-e.preventDefault();
-openProtocolModal(this.dataset.title);
-    })
 })
-modalClose.onclick = closeProtocolModal;
-protocolModal.addEventListener('click',e=>{if(e.target === protocolModal) closeProtocolModal()})
-acceptBtn.onclick = function(){
-if(agreeState[currentProtocolName]) return;
-agreeState[currentProtocolName] = true;
-clearInterval(timer);
-const unAgreeList = getUnAgreeProtocolList();
-if(unAgreeList.length >0){
-openProtocolModal(unAgreeList[0]);
+// 点击页面空白关闭下拉
+document.addEventListener("click", ()=>{
+countryDropdown.classList.remove("show");
+})
+// 清除按钮逻辑
+function toggleClearIcon(){
+if(phoneInput.value.trim() !== ""){
+clearIcon.style.display = "flex";
     }else{
-closeProtocolModal();
-agreeCheck.checked = true;
+clearIcon.style.display = "none";
     }
 }
-refuseBtn.onclick = function(){
-agreeState[currentProtocolName] = false;
-agreeCheck.checked = false;
-closeProtocolModal();
-showToast(`你已取消同意并接受【${currentProtocolName}】，将无法继续使用，如需再次使用需重新阅读相关协议同意并接受`,5000);
+// 【核心新增】控制国家码下拉框可用状态
+function toggleCountryCodeState(){
+const val = phoneInput.value.trim();
+if(val !== ""){
+// 输入框有内容：禁用国家码选择，清除错误边框
+countryDisplay.classList.add("disabled");
+phoneGroupWrap.classList.remove("error-border");
+countryDropdown.classList.remove("show");
+}else{
+// 输入框为空：启用国家码选择
+countryDisplay.classList.remove("disabled");
 }
-agreeCheck.addEventListener('click',function(e){
-const unAgreeList = getUnAgreeProtocolList();
-if(unAgreeList.length ===0) return true;
+}
+// 输入监听：过滤非数字 + 控制清除按钮显示 +【新增：输入合法自动移除粉色边框、清空提示】+ 控制国家码状态
+phoneInput.addEventListener('input', function(e) {
+this.value = this.value.replace(/\D/g, '');
+toggleClearIcon();
+toggleCountryCodeState();
+const val = this.value.trim();
+if(phoneReg.test(val)){
+phoneGroupWrap.classList.remove('error-border');
+setErrorTip(""); //输入正确清空提示
+}
+});
+// 粘贴拦截，过滤非数字并限制最多11位
+phoneInput.addEventListener('paste', function(e){
 e.preventDefault();
-if(unAgreeList.length === protocolList.length){
-alertText.innerText = `请先阅读并同意【用户协议、隐私政策、认证服务条款】，否则无法继续使用。是否现在阅读？`;
-    }else{
-alertText.innerText = `您还有【${unAgreeList.join('、')}】未阅读并同意，是否现在阅读？`;
-    }
-alertModal.style.display = 'flex';
-})
-alertCancelBtn.onclick = ()=>alertModal.style.display = 'none';
-alertConfirmBtn.onclick = function(){
-alertModal.style.display = 'none';
-const unAgreeList = getUnAgreeProtocolList();
-if(unAgreeList.length>0) openProtocolModal(unAgreeList[0]);
+const pasteText = (e.clipboardData || window.clipboardData).getData('text');
+const onlyNum = pasteText.replace(/\D/g,'');
+this.value = onlyNum.slice(0,11);
+toggleClearIcon();
+toggleCountryCodeState();
+const val = this.value.trim();
+if(phoneReg.test(val)){
+phoneGroupWrap.classList.remove('error-border');
+setErrorTip("");
 }
-alertModal.addEventListener('click',e=>{if(e.target === alertModal) alertModal.style.display = 'none'})
+})
+clearIcon.addEventListener('click', ()=>{
+phoneInput.value = "";
+toggleClearIcon();
+toggleCountryCodeState(); //清空后恢复国家码可点击
+phoneInput.focus();
+setErrorTip(""); //清空输入框同时清空提示
+})
+//滑块元素
+const slideModalMask = document.getElementById("slideModalMask");
+const slideBox = document.getElementById("slideBox");
+const slideBtn = document.getElementById("slideBtn");
+const slideProgress = document.getElementById("slideProgress");
+const slideTip = document.getElementById("slideTip");
+let slideVerified = false;
+let isDrag = false;
+let maxW = 0;
+let targetPhone = "";
+const ONE_HOUR = 60 * 60 * 1000;
+// 中国大陆手机号正则
+const phoneReg = /^1(3[0-9]|4[579]|5[0-3,5-9]|6[2567]|7[0-8]|8[0-9]|9[0-3,5-9])\d{8}$/;
+// 返回按钮跳转
+backBtn.addEventListener('click', ()=>{
+location.href = "登陆页.html";
+});
+let modalTimer = null;
+function openModal(msg){
+modalMsg.innerText = msg;
+modalMask.classList.add("show");
+if(modalTimer) clearTimeout(modalTimer);
+modalTimer = setTimeout(()=>{
+closeModal();
+},3000);
+}
+function closeModal(){
+if(modalTimer) clearTimeout(modalTimer);
+modalMask.classList.remove("show");
+}
+function openSlideModal(){
+slideVerified = false;
+slideBtn.style.left = "0px";
+slideProgress.style.width = "0%";
+slideTip.textContent = "请拖动滑块完成验证";
+slideTip.style.color="#666";
+slideBtn.style.background="#fff";
+slideModalMask.classList.add("show");
+setTimeout(()=>{
+maxW = slideBox.clientWidth - slideBtn.offsetWidth;
+},10)
+}
+function closeSlideModal(){
+slideModalMask.classList.remove("show");
+}
+//读取当前手机号一小时内发送记录
+function getSmsRecords(phone){
+const key = "sms_send_records_" + phone;
+const raw = localStorage.getItem(key);
+let list = raw ? JSON.parse(raw) : [];
+const now = Date.now();
+list = list.filter(ts => now - ts < ONE_HOUR);
+localStorage.setItem(key, JSON.stringify(list));
+return list;
+}
+//添加一条发送记录
+function addSmsRecord(phone){
+const key = "sms_send_records_" + phone;
+const list = getSmsRecords(phone);
+list.push(Date.now());
+localStorage.setItem(key, JSON.stringify(list));
+}
+// 跳转验证码页面
+function goVerifyPage(country, phone){
+location.href = "验证码输入页.html?country="+encodeURIComponent(country)+"&phone="+encodeURIComponent(phone);
+}
+getCodeBtn.addEventListener('click', ()=>{
+const val = phoneInput.value.trim();
+const code = currentCountryCode;
+// ========= 删除原来的国家码判断，不再校验code是否+86 =========
+if(!phoneReg.test(val)){
+const msg = "*请输入有效的11位中国大陆手机号";
+// openModal(msg); //注释掉此行，不再弹出弹窗
+setErrorTip(msg); //仅下方提示文字
+// 校验失败：【改为外层容器添加粉色边框 + 晃动动画】
+phoneGroupWrap.classList.add('error-border','shake-anim');
+setTimeout(()=>{
+phoneGroupWrap.classList.remove('shake-anim');
+},300);
+return;
+}
+// 校验通过，清除错误样式
+phoneGroupWrap.classList.remove('error-border','shake-anim');
+setErrorTip(""); //校验通过清空提示
+targetPhone = code + val;
+const records = getSmsRecords(targetPhone);
+if(records.length >=3){
+openSlideModal();
+}else{
+addSmsRecord(targetPhone);
+goVerifyPage(code, val);
+}
+})
+//滑块鼠标事件
+slideBtn.addEventListener('mousedown',(e)=>{
+isDrag = true;
+e.preventDefault();
+})
+document.addEventListener('mousemove',(e)=>{
+if(!isDrag) return;
+const rect = slideBox.getBoundingClientRect();
+let x = e.clientX - rect.left - slideBtn.offsetWidth/2;
+if(x <0) x=0;
+if(x>maxW) x = maxW;
+slideBtn.style.left = x + "px";
+let percent = (x/maxW)*100;
+slideProgress.style.width = percent+"%";
+})
+document.addEventListener('mouseup',()=>{
+if(!isDrag) return;
+isDrag = false;
+const leftVal = parseInt(slideBtn.style.left);
+if(leftVal >= maxW*0.9){
+slideVerified = true;
+slideTip.textContent = "验证成功";
+slideTip.style.color="#00c48c";
+slideBtn.style.background="#00c48c";
+setTimeout(()=>{
+closeSlideModal();
+addSmsRecord(targetPhone);
+goVerifyPage(currentCountryCode, phoneInput.value.trim());
+},600)
+}else{
+slideBtn.style.left = "0px";
+slideProgress.style.width = "0%";
+slideTip.textContent = "验证失败，请重试";
+slideTip.style.color="#f56c6c";
+}
+})
+//移动端触摸
+slideBtn.addEventListener('touchstart',(e)=>{
+isDrag = true;
+})
+document.addEventListener('touchmove',(e)=>{
+if(!isDrag) return;
+e.preventDefault();
+const rect = slideBox.getBoundingClientRect();
+let x = e.touches[0].clientX - rect.left - slideBtn.offsetWidth/2;
+if(x <0) x=0;
+if(x>maxW) x = maxW;
+slideBtn.style.left = x + "px";
+let percent = (x/maxW)*100;
+slideProgress.style.width = percent+"%";
+},{passive:false})
+document.addEventListener('touchend',()=>{
+if(!isDrag) return;
+isDrag = false;
+const leftVal = parseInt(slideBtn.style.left);
+if(leftVal >= maxW*0.9){
+slideVerified = true;
+slideTip.textContent = "验证成功";
+slideTip.style.color="#00c48c";
+slideBtn.style.background="#00c48c";
+setTimeout(()=>{
+closeSlideModal();
+addSmsRecord(targetPhone);
+goVerifyPage(currentCountryCode, phoneInput.value.trim());
+},600)
+}else{
+slideBtn.style.left = "0px";
+slideProgress.style.width = "0%";
+slideTip.textContent = "验证失败，请重试";
+slideTip.style.color="#f56c6c";
+}
+})
+modalMask.addEventListener('click',e=>{if(e.target===modalMask) closeModal();})
 </script>
 </body>
 </html>
