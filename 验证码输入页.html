@@ -55,6 +55,7 @@ width: 100%;
 max-width: 420px;
 background: #cccccc;
 padding: 18px 24px;
+position: relative;
         }
 .title-text {
 font-size: 34px;
@@ -70,12 +71,15 @@ margin-bottom: 28px;
 white-space: nowrap;
 overflow: hidden;
 }
-/* 验证码输入框容器 */
+/* 验证码输入框容器：增加will-change修复聚拢卡顿 */
 .code-box-container {
 display: flex;
 gap: 16px;
 margin-bottom: 28px;
-position:relative;
+position: relative;
+justify-content: center;
+transition: gap 0.5s ease;
+will-change: transform;
         }
 #hiddenInput{
 position:absolute;
@@ -87,6 +91,7 @@ z-index:-1;
 }
 .code-item {
 flex: 1;
+max-width: 72px;
 aspect-ratio: 1 / 1;
 background: #ffffff;
 border: 3px solid #fff;
@@ -99,8 +104,52 @@ font-weight: 600;
 color: #222;
 position: relative;
 cursor: pointer;
-transition: 0.2s;
+transition: transform 0.5s ease, opacity 0.4s ease, border-color 0.3s ease;
+overflow: hidden;
         }
+/* 单个输入框独立流星跑马灯：仅边框线条显示流星，内部完全不显示 */
+
+.code-item .item-light-border {
+position: absolute;
+inset: 0;
+border-radius: 12px; /* 和.code-item圆角保持一致！ */
+pointer-events: none;
+z-index: 5;
+background: conic-gradient(from 0deg, transparent 0deg, #ff78a1 0deg, #ffb8d2 15deg, #ff78a1 30deg, transparent 30deg);
+animation: itemLightRotate 0.9s linear 1;
+
+mask-image:
+  linear-gradient(#000 0 0),
+  linear-gradient(#000 0 0);
+mask-clip: border-box, border-box;
+mask-composite: exclude;
+mask-size: 100% 100%, calc(100% - 4px) calc(100% - 4px);
+mask-position: center, center;
+mask-repeat: no-repeat;
+mask-border-radius: 8px; /* 内层挖空圆角，和外层一致 */
+
+-webkit-mask-image:
+  linear-gradient(#000 0 0),
+  linear-gradient(#000 0 0);
+-webkit-mask-clip: border-box, border-box;
+-webkit-mask-composite: xor;
+-webkit-mask-size: 100% 100%, calc(100% - 4px) calc(100% - 4px);
+-webkit-mask-position: center, center;
+-webkit-mask-repeat: no-repeat;
+-webkit-mask-border-radius: 8px;
+}
+
+
+
+
+@keyframes itemLightRotate {
+0% {
+transform: rotate(0deg);
+}
+100% {
+transform: rotate(360deg);
+}
+}
 .code-item.flash {
 animation: flashPink 0.25s ease-out;
 }
@@ -114,6 +163,16 @@ border-color: #ffffff;
 transform: scale(1);
 }
 }
+/* 四个框向中间聚拢成一个框 */
+.code-item.merged {
+transform: translateX(0) scale(0.85);
+opacity: 1;
+}
+/* 聚拢完成后整体消失 */
+.code-item.hidden {
+opacity: 0;
+pointer-events: none;
+}
 .code-item.active::after {
 content: "";
 position: absolute;
@@ -126,6 +185,42 @@ animation: blink 1s infinite;
 0%, 100% { opacity: 1; }
 50% { opacity: 0; }
         }
+/* 成功状态 */
+.success-wrap{
+position:absolute;
+left:50%;
+top:50%;
+transform: translate(-50%,-50%);
+width:72px;
+height:72px;
+border-radius:50%;
+background:#00c48c;
+border: 4px solid #fff;
+display:flex;
+align-items:center;
+justify-content:center;
+opacity:0;
+transition: opacity 0.45s ease;
+z-index: 10;
+}
+.success-check{
+color:#fff;
+font-size:40px;
+font-weight:bold;
+opacity:0;
+transition: opacity 0.4s ease 0.25s;
+}
+.success-text{
+position:absolute;
+top:110px;
+left:50%;
+transform:translateX(-50%);
+font-size:22px;
+color:#ff78a1;
+white-space:nowrap;
+opacity:0;
+transition: opacity 0.4s ease 0.45s;
+}
 /* 重新获取按钮 */
 .resend-btn {
 width: 100%;
@@ -136,7 +231,7 @@ font-size: 20px;
 color: #aaaaaa;
 background: #ffffff;
 cursor: pointer;
-transition: 0.2s;
+transition: opacity 0.4s ease;
         }
 .resend-btn:disabled {
 opacity: 0.7;
@@ -293,12 +388,16 @@ display:flex;
 <div class="verify-card">
 <div class="title-text">输入验证码</div>
 <div class="tip-text" id="tipText"></div>
-<div class="code-box-container">
+<div class="code-box-container" id="codeContainer">
 <input id="hiddenInput" type="text" inputmode="numeric" maxlength="4" autocomplete="one-time-code">
 <div class="code-item"></div>
 <div class="code-item"></div>
 <div class="code-item"></div>
 <div class="code-item"></div>
+<div class="success-wrap" id="successCircle">
+<div class="success-check">✓</div>
+</div>
+<div class="success-text" id="successText"></div>
 </div>
 <button class="resend-btn" id="resendBtn">获取验证码</button>
 </div>
@@ -334,9 +433,10 @@ display:flex;
 <div class="toast-box" id="toastText"></div>
 </div>
 <script>
-//读取url参数拿到手机号
+//读取url参数拿到手机号、国家码
 const urlParams = new URLSearchParams(location.search);
 const phone = urlParams.get('phone') || '';
+const countryCode = urlParams.get('country') || '+86';
 const boxes = document.querySelectorAll(".code-item");
 const hiddenInput = document.getElementById('hiddenInput');
 const resendBtn = document.getElementById("resendBtn");
@@ -359,20 +459,23 @@ let maxW = 0;
 //toast浮窗
 const toastMask = document.getElementById("toastMask");
 const toastText = document.getElementById("toastText");
+const codeContainer = document.getElementById("codeContainer");
+const successCircle = document.getElementById("successCircle");
+const successCheck = document.querySelector(".success-check");
+const successText = document.getElementById("successText");
 let codeArr = ["", "", "", ""];
 let pos = 0;
 let timer = null;
 let realVerifyCode = "";
 let codeGenerateTime = 0;
 let codeIsUsed = false;
-let codeErrorCount = 0; // 当前验证码错误次数（单验证码）
+let codeErrorCount = 0;
 // 存储key：按手机号区分
 const STORAGE_KEY = "sms_send_records_" + phone;
 const CODE_CACHE_KEY = "current_code_" + phone;
 const LOCK_KEY = "phone_lock_info_" + phone;
 const ONE_HOUR = 60 * 60 * 1000;
-const CODE_EXPIRE = 2 * 60 * 1000; //验证码2分钟有效期
-
+const CODE_EXPIRE = 2 * 60 * 1000;
 // 锁定信息读取
 function getLockInfo(){
 const raw = localStorage.getItem(LOCK_KEY);
@@ -391,7 +494,7 @@ return {isLocked:true, remain: lockInfo.lockEndTs - now};
 }
 return {isLocked:false, remain:0};
 }
-// 计算下一次锁定时长（全局错误次数）
+// 计算下一次锁定时长
 function getLockDuration(failCount){
 if(failCount === 10) return 1 * 60 * 1000;
 if(failCount === 11) return 5 * 60 * 1000;
@@ -414,7 +517,7 @@ const list = getSmsRecords();
 list.push(Date.now());
 localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
 }
-// 缓存验证码 + 倒计时信息 + 错误次数
+// 缓存验证码
 function saveCodeCache(code, time, used, countStartTs, totalSec, codeErrCnt){
 const cacheData = {
 code: code,
@@ -438,11 +541,13 @@ return null;
     }
 return obj;
 }
-tipText.innerText = "验证码已发送至 +86 " + phone;
+tipText.innerText = `验证码已发送至 ${countryCode} ${phone}`;
 function renderCode(){
 boxes.forEach((box,idx)=>{
 box.innerText = codeArr[idx] || "";
 box.classList.remove("active");
+box.classList.remove("merged");
+box.classList.remove("hidden");
     })
 }
 function triggerFlash(index){
@@ -457,7 +562,55 @@ hiddenInput.focus();
 if(pos<4) boxes[pos].classList.add("active");
     })
 })
-// ==========【输入校验逻辑（重写】==========
+// ✅验证成功动画：四个输入框各自同时播放粉色流星跑马灯一圈 → 四框聚拢
+async function runSuccessAnimation(){
+// 【新增】验证码按钮渐隐
+resendBtn.style.opacity = "0";
+
+// 【改动】给每一个输入框单独创建流星边框，4个同时开始旋转
+boxes.forEach(box => {
+// 清理残留旧流星元素
+let oldLight = box.querySelector('.item-light-border');
+if(oldLight) oldLight.remove();
+let lightBorder = document.createElement('div');
+lightBorder.className = 'item-light-border';
+box.appendChild(lightBorder);
+});
+await sleep(900);
+// 2. 四个输入框向中心点聚拢（只做一次位移，之后位置固定不动）
+codeContainer.style.gap = "0px";
+boxes.forEach((box, idx) => {
+const centerIndex = 1.5;
+const offset = (centerIndex - idx) * 72;
+box.style.transform = `translateX(${offset}px) scale(0.85)`;
+box.style.opacity = "1";
+    });
+await sleep(500);
+// 3. 保持聚拢位置不变，仅透明度淡出
+boxes.forEach(box => {
+box.style.opacity = "0";
+    });
+await sleep(400);
+// 4. 绿色圆形对勾渐显
+successCircle.style.opacity = "1";
+successCheck.style.opacity = "1";
+// 绿勾出现后，绿色欢迎文字渐显 ${phone}
+successText.textContent = `欢迎回来`;
+successText.style.color = "#00c48c";
+successText.style.backgroundColor = "#ffffff";
+successText.style.padding = "4px 14px";
+successText.style.borderRadius = "999px";
+successText.style.opacity = "1";
+successText.style.width = "auto";
+
+await sleep(1200);
+// 5. 跳转
+location.href = "常用项选择.html";
+}
+function sleep(ms){
+return new Promise(resolve=>setTimeout(resolve,ms));
+}
+// ==========【输入校验逻辑】==========
 hiddenInput.addEventListener('input',(e)=>{
 let val = e.target.value.replace(/\D/g, '').slice(0,4);
 e.target.value = val;
@@ -481,53 +634,44 @@ const inputCode = codeArr.join("");
 const now = Date.now();
 const lockInfo = getLockInfo();
 const lockStatus = checkIsLocked();
-// 如果账号处于锁定状态
 if(lockStatus.isLocked){
 showToast(`账号锁定中，请等待${Math.ceil(lockStatus.remain/1000)}秒后重试`);
 resetInput();
 return;
 }
-// 验证码过期
 if(now - codeGenerateTime > CODE_EXPIRE){
 showToast("当前验证码已失效请重新获取");
 resetInput();
 return;
 }
-// 验证码已经成功使用过一次
 if(codeIsUsed){
 showToast("当前验证码已失效请重新获取");
 resetInput();
 return;
 }
-// 当前验证码错误次数 >=5，第6次直接失效
 if(codeErrorCount >=5){
 showToast("当前验证码错误次数过多，请重新获取");
 resetInput();
 return;
 }
 if(inputCode === realVerifyCode){
-//✅验证成功，清空全局错误次数
 codeIsUsed = true;
 saveCodeCache(realVerifyCode, codeGenerateTime, codeIsUsed, cacheCode?.countStartTs||Date.now(), cacheCode?.totalSec||60, codeErrorCount);
 let lockData = getLockInfo();
 lockData.globalFailCount = 0;
 lockData.lockEndTs = 0;
 saveLockInfo(lockData);
-showToast(`欢迎回来 ${phone}`);
-resetInput();
+runSuccessAnimation();
 }else{
-//❌验证码错误，单验证码错误次数+1，全局错误次数+1
 codeErrorCount++;
 let lockData = getLockInfo();
 lockData.globalFailCount +=1;
 const newGlobalFail = lockData.globalFailCount;
-//判断是否需要上锁
 const lockDur = getLockDuration(newGlobalFail);
 if(lockDur>0){
 lockData.lockEndTs = Date.now() + lockDur;
 }
 saveLockInfo(lockData);
-// 提示文案
 if(newGlobalFail >=6 && newGlobalFail <10){
 const remainTry = 10 - newGlobalFail;
 showToast(`验证码错误，还可尝试${remainTry}次后账户将被锁定1分钟`);
@@ -544,6 +688,20 @@ codeArr = ["","","",""];
 pos =0;
 hiddenInput.value = "";
 renderCode();
+// 重置成功动画状态，清除每个框内部流星边框
+codeContainer.style.gap = "16px";
+boxes.forEach(b=>{
+b.style.transform = "";
+b.style.opacity = "1";
+b.classList.remove('hidden');
+let oldLight = b.querySelector('.item-light-border');
+if(oldLight) oldLight.remove();
+});
+successCircle.style.opacity = "0";
+successCheck.style.opacity = "0";
+successText.style.opacity = "0";
+// 重置按钮透明度
+resendBtn.style.opacity = "1";
 }
 hiddenInput.addEventListener("focus", ()=>{
 setTimeout(()=>{
@@ -642,7 +800,7 @@ startCountdown(cacheCode.countStartTs, cacheCode.totalSec);
 realVerifyCode = generate4Code();
 codeGenerateTime = Date.now();
 codeIsUsed = false;
-codeErrorCount = 0; //新验证码，错误次数清零
+codeErrorCount = 0;
 const totalSec = initRecords.length >5 ? 120 :60;
 const countStartTs = Date.now();
 saveCodeCache(realVerifyCode, codeGenerateTime, codeIsUsed, countStartTs, totalSec, codeErrorCount);
@@ -727,7 +885,6 @@ slideTip.style.color="#f56c6c";
 })
 //执行发送验证码逻辑
 function doSendCode(){
-//发送验证码前，先检查锁定状态
 const lockStatus = checkIsLocked();
 if(lockStatus.isLocked){
 const sec = Math.ceil(lockStatus.remain / 1000);
@@ -738,7 +895,7 @@ const records = getSmsRecords();
 realVerifyCode = generate4Code();
 codeGenerateTime = Date.now();
 codeIsUsed = false;
-codeErrorCount = 0; //换新验证码，当前验证码错误次数重置为0
+codeErrorCount = 0;
 const totalSec = records.length >5 ?120:60;
 const countStartTs = Date.now();
 saveCodeCache(realVerifyCode, codeGenerateTime, codeIsUsed, countStartTs, totalSec, codeErrorCount);
@@ -755,7 +912,6 @@ startCountdown(countStartTs, totalSec);
 // 点击【重新获取】
 resendBtn.addEventListener('click', ()=>{
 if(resendBtn.disabled) return;
-//先校验锁定状态
 const lockStatus = checkIsLocked();
 if(lockStatus.isLocked){
 const sec = Math.ceil(lockStatus.remain / 1000);
