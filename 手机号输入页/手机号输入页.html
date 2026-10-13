@@ -1,0 +1,1654 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<title>输入手机号</title>
+<style>
+* {
+margin: 0;
+padding: 0;
+box-sizing: border-box;
+font-family: system-ui, -apple-system, BlinkMacSystemFont, "PingFang SC", sans-serif;
+        }
+html, body {
+height: 100%;
+background-color: #d2d0cf;
+overflow-x: hidden;
+        }
+body {
+display: flex;
+flex-direction: column;
+        }
+/* 返回按钮：绝对定位，脱离文档流，不会挤压/覆盖下方页面内容 */
+.back-icon-wrap {
+position:absolute;
+top:40px;
+left:20px;
+z-index: 10;
+        }
+.back-btn {
+width: 36px;
+height: 36px;
+border-radius: 50%;
+border: 1px solid #cccccc;
+display: flex;
+align-items: center;
+justify-content: center;
+background: #fff;
+cursor: pointer;
+        }
+.back-btn svg {
+width: 18px;
+height: 18px;
+fill: #666;
+        }
+.container{
+flex:1;
+padding: 0 32px;
+padding-top: 100px; /* 增加顶部内边距，避开左上角返回按钮区域 */
+        }
+.card-title {
+font-size: clamp(24px,5vw,36px); /* 动态等比例字号 */
+color: #ffffff;
+font-weight: 600;
+margin-bottom: 12px;
+        }
+.card-desc {
+font-size: clamp(14px,3vw,20px);
+color: #ffffff;
+opacity: 0.9;
+margin-bottom: 40px;
+white-space: nowrap; /* 强制单行 */
+overflow: hidden;
+text-overflow: ellipsis;
+        }
+/* =========【新增】合并外层容器，国家码+输入框放同一个白色框 ========= */
+.phone-group-wrap {
+width:100%;
+height:59px;
+display:flex;
+align-items:center;
+background:#fff;
+border-radius:8px;
+position:relative;
+}
+/* 分割竖线 */
+.divider-line {
+width:1px;
+height:24px;
+background:#d2d0cf;
+flex-shrink:0;
+}
+.phone-input-wrap {
+margin-bottom: 8px;
+width:100%;
+}
+/* ========== 修改：错误提示行，取消自带颜色，用来放内联胶囊span ========== */
+.error-tip-line{
+width:100%;
+margin-bottom:24px;
+font-size:14px;
+min-height:20px;
+}
+/* ✅ 新增：白色胶囊提示，宽度跟随文字，胶囊圆角【已修复空文字消失】+单行自适应字号 */
+.error-tip-badge{
+display:inline-block;
+background:#ffffff;
+color:#ff6b81;
+border-radius:999px;
+padding:3px 12px;
+opacity:0;
+visibility:hidden;
+transition: all 0.2s ease;
+font-size: clamp(12px,2.5vw,14px);
+white-space: nowrap;
+overflow: hidden;
+text-overflow: ellipsis;
+max-width: 100%;
+}
+.error-tip-badge.has-text{
+opacity:1;
+visibility:visible;
+}
+/* ========== 自定义国家码下拉 | 圆角8px ========== */
+.country-code-wrap{
+position:relative;
+min-width:110px;
+height:100%;
+flex-shrink:0;
+}
+.country-display {
+width:100%;
+height: 100%;
+padding:0 12px;
+padding-right:30px;
+background:transparent; /* 透明！外层由phone-group-wrap提供白色背景 */
+font-size:20px;
+color:#222;
+border:none;
+outline:none;
+text-align:center;
+line-height:59px;
+cursor:pointer;
+transition: border 0.2s;
+display:flex;
+align-items:center;
+justify-content:center;
+gap:6px;
+}
+/* 国旗样式 */
+.flag{
+width:24px;
+height:16px;
+border-radius:2px;
+object-fit:cover;
+vertical-align:middle;
+}
+/* 禁用状态样式 */
+.country-display.disabled {
+cursor: not-allowed;
+opacity:0.75;
+pointer-events:none;
+}
+/* 粉色边框样式 移到外层phone-group-wrap */
+.phone-group-wrap.error-border {
+border: 2px solid #ff6b81;
+}
+/* 左右晃动动画 */
+@keyframes shake {
+0%,100% {transform: translateX(0);}
+20% {transform: translateX(-4px);}
+40% {transform: translateX(4px);}
+60% {transform: translateX(-4px);}
+80% {transform: translateX(4px);}
+}
+.shake-anim {
+animation: shake 0.3s ease-in-out;
+}
+.country-code-wrap::after{
+content:"▼";
+position:absolute;
+top:50%;
+transform:translateY(-50%);
+right:12px;
+font-size:14px;
+color:#666;
+pointer-events:none;
+}
+/* ========== 重点修改：下拉框4个圆角 + 滚动条动态显示 ========== */
+.country-dropdown{
+position:absolute;
+top:62px;
+left:0;
+width:240px;
+max-height:420px;
+overflow-y:auto;
+background:#fff;
+border-radius:16px; /* 四角圆弧 */
+box-shadow:0 4px 12px rgba(0,0,0,0.12);
+display:none;
+z-index:99;
+/* 滚动条基础 */
+scrollbar-width: thin;
+scrollbar-color: #ccc transparent;
+}
+.country-dropdown.show{
+display:block;
+}
+/* 滚动条样式 Webkit */
+.country-dropdown::-webkit-scrollbar {
+width: 6px;
+}
+.country-dropdown::-webkit-scrollbar-track {
+background: transparent;
+}
+.country-dropdown::-webkit-scrollbar-thumb {
+background: transparent;
+border-radius: 3px;
+transition: background 0.3s;
+}
+.country-dropdown.scroll-active::-webkit-scrollbar-thumb {
+background: #cccccc;
+}
+.country-group-title{
+padding:8px 12px;
+font-size:15px;
+color:#888;
+background:#f7f7f7;
+position:sticky;
+top:0;
+}
+.country-item{
+padding:10px 12px;
+padding-left:20px;
+font-size:16px;
+cursor:pointer;
+display:flex;
+align-items:center;
+gap:8px;
+}
+.country-item:hover{
+background:#f3f3f3;
+}
+/* ====================================== */
+/* 手机号输入框外层容器，用来放手机图标 + 清除按钮 */
+.phone-input-box{
+position:relative;
+flex:1;
+height:100%;
+}
+/* 手机SVG图标 #d2d0cf */
+.phone-icon{
+position:absolute;
+left:20px;
+top:50%;
+transform:translateY(-50%);
+width:20px;
+height:20px;
+fill:#d2d0cf;
+pointer-events:none;
+}
+/* 清除按钮 */
+.clear-icon{
+position:absolute;
+right:16px;
+top:50%;
+transform:translateY(-50%);
+width:24px;
+height:24px;
+border-radius:50%;
+background:#d2d0cf;
+display:none;
+align-items:center;
+justify-content:center;
+cursor:pointer;
+z-index:2;
+}
+.clear-icon svg{
+width:14px;
+height:14px;
+fill:#fff;
+}
+/* 手机号输入框：背景透明，去掉边框，整体背景交给外层phone-group-wrap */
+.phone-input {
+width:100%;
+height: 100%;
+border-radius:0;
+border: none;
+font-size: 20px;
+padding: 0 52px 0 48px;
+outline: none;
+background: transparent;
+min-width:0;
+transition: border 0.2s;
+}
+.phone-input:disabled {
+background:transparent;
+color:#999;
+cursor:not-allowed;
+}
+.get-code-btn {
+width: 100%;
+height: 48px;
+border-radius: 999px;
+border: none;
+font-size: 18px;
+color: #b8b8b8;
+background: #ffffff;
+cursor: pointer;
+transition: all 0.2s;
+margin-top:8px;
+}
+.get-code-btn:disabled {
+opacity: 0.7;
+cursor: not-allowed;
+}
+/*==== 半透明提示弹窗（无底部确认按钮，3秒自动消失）====*/
+.modal-mask {
+position: fixed;
+top: 0;
+left: 0;
+right: 0;
+bottom: 0;
+background: rgba(255,182,193,0.35); /*粉色半透明遮罩【修改】 */
+z-index: 200;
+display: none;
+align-items: center;
+justify-content: center;
+}
+.modal-wrap {
+width: auto;
+max-width: 320px;
+background: rgb(255, 170, 186); /* 粉色半透明弹窗面板【修改】 */
+border-radius: 12px;
+overflow: hidden;
+padding:16px 24px;
+}
+.modal-body {
+text-align: center;
+}
+.modal-msg-text {
+font-size:17px;
+font-weight:500;
+color:#ffffff;
+}
+/*滑块验证弹窗【遮罩改为粉色半透明】*/
+.slide-modal-mask {
+position: fixed;
+top: 0;
+left: 0;
+right: 0;
+bottom: 0;
+background: rgba(255,182,193,0.35); /*粉色半透明遮罩【修改】*/
+z-index: 210;
+display: none;
+align-items: center;
+justify-content: center;
+}
+.slide-modal-wrap{
+width:320px;
+background:#fff;
+border-radius:16px;
+overflow:hidden;
+}
+.slide-modal-body{
+padding:24px 20px;
+}
+.slide-title{
+text-align:center;
+font-size:18px;
+color:#222;
+margin-bottom:20px;
+}
+.slide-box{
+width:100%;
+height:44px;
+background:#e8e8e8;
+border-radius:22px;
+position:relative;
+overflow:hidden;
+touch-action:none;
+}
+.slide-progress{
+position:absolute;
+left:0;
+top:0;
+height:100%;
+background:#409eff;
+width:0%;
+}
+.slide-btn{
+width:44px;
+height:44px;
+border-radius:50%;
+background:#fff;
+box-shadow:0 0 3px #999;
+position:absolute;
+top:0;
+left:0;
+cursor:grab;
+display:flex;
+align-items:center;
+justify-content:center;
+font-weight:bold;
+user-select:none;
+}
+.slide-tip{
+text-align:center;
+margin-top:16px;
+color:#666;
+font-size:14px;
+}
+.slide-modal-mask.show{
+display:flex;
+}
+/* 适配手机小屏 */
+@media (max-width: 480px) {
+.container{
+padding: 0 20px;
+padding-top: 90px; /* 小屏保持足够顶部距离，避开返回按钮 */
+}
+.card-desc{
+margin-bottom:28px;
+}
+.phone-input-wrap{
+margin-bottom:8px;
+}
+.error-tip-line{
+margin-bottom:20px;
+}
+/* 小屏下胶囊字号再缩小 */
+.error-tip-badge{
+font-size: clamp(11px,3vw,12px);
+padding:2px 10px;
+}
+.phone-group-wrap{
+height:48px;
+}
+.country-code-wrap{
+min-width:90px;
+height:100%;
+}
+.country-display{
+height:100%;
+font-size:16px;
+line-height:48px;
+gap:4px;
+}
+.phone-group-wrap.error-border {
+border: 2px solid #ff6b81;
+}
+.country-dropdown{
+width:220px;
+}
+.phone-input-box{
+height:100%;
+}
+.phone-input{
+height:100%;
+font-size:16px;
+padding:0 44px 0 42px;
+}
+.phone-input:disabled {
+background:transparent;
+}
+.phone-icon{
+left:16px;
+width:18px;
+height:18px;
+}
+.clear-icon{
+right:12px;
+width:22px;
+height:22px;
+}
+.clear-icon svg{
+width:12px;
+height:12px;
+}
+.get-code-btn{
+height:44px;
+font-size:16px;
+margin-top:8px;
+}
+.divider-line{
+height:20px;
+}
+}
+</style>
+</head>
+<body>
+<div class="back-icon-wrap">
+<div class="back-btn" id="backBtn">
+<svg viewBox="0 0 24 24">
+<path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z" />
+</svg>
+</div>
+</div>
+<div class="container">
+<div class="card-title">输入你的手机号</div>
+<div class="card-desc">请输入你的手机号，点击获取验证码完成验证</div>
+<div class="phone-input-wrap">
+<!-- 【HTML改动：外层统一容器，国家码 | 分割线 | 输入框 -->
+<div class="phone-group-wrap" id="phoneGroupWrap">
+<div class="country-code-wrap">
+<div class="country-display" id="countryDisplay">
+<img class="flag" src="国旗/中国大陆.png" alt="">
++86
+</div>
+<div class="country-dropdown" id="countryDropdown">
+<div class="country-group-title">中国地区</div>
+<div class="country-item" data-code="+86" data-name="中国大陆">
+<img class="flag" src="国旗/中国大陆.png" alt="">
+中国大陆 +86
+</div>
+<div class="country-item" data-code="+852" data-name="中国香港">
+<img class="flag" src="国旗/中国香港.png" alt="">
+中国香港 +852
+</div>
+<div class="country-item" data-code="+853" data-name="中国澳门">
+<img class="flag" src="国旗/中国澳门.png" alt="">
+中国澳门 +853
+</div>
+<div class="country-item" data-code="+886" data-name="中国台湾">
+<img class="flag" src="国旗/中国大陆.png" alt="">
+中国台湾 +886
+</div>
+<div class="country-group-title">亚洲地区</div>
+<div class="country-item" data-code="+93" data-name="阿富汗">
+<img class="flag" src="国旗/阿富汗.png" alt="">
+阿富汗 +93
+</div>
+<div class="country-item" data-code="+92" data-name="巴基斯坦">
+<img class="flag" src="国旗/巴基斯坦.png" alt="">
+巴基斯坦 +92
+</div>
+<div class="country-item" data-code="+91" data-name="印度">
+<img class="flag" src="国旗/印度.png" alt="">
+印度 +91
+</div>
+<div class="country-item" data-code="+880" data-name="孟加拉国">
+<img class="flag" src="国旗/孟加拉国.png" alt="">
+孟加拉国 +880
+</div>
+<div class="country-item" data-code="+94" data-name="斯里兰卡">
+<img class="flag" src="国旗/斯里兰卡.png" alt="">
+斯里兰卡 +94
+</div>
+<div class="country-item" data-code="+960" data-name="马尔代夫">
+<img class="flag" src="国旗/马尔代夫.png" alt="">
+马尔代夫 +960
+</div>
+<div class="country-item" data-code="+977" data-name="尼泊尔">
+<img class="flag" src="国旗/尼泊尔.png" alt="">
+尼泊尔 +977
+</div>
+<div class="country-item" data-code="+975" data-name="不丹">
+<img class="flag" src="国旗/不丹.png" alt="">
+不丹 +975
+</div>
+<div class="country-item" data-code="+95" data-name="缅甸">
+<img class="flag" src="国旗/缅甸.png" alt="">
+缅甸 +95
+</div>
+<div class="country-item" data-code="+66" data-name="泰国">
+<img class="flag" src="国旗/泰国.png" alt="">
+泰国 +66
+</div>
+<div class="country-item" data-code="+856" data-name="老挝">
+<img class="flag" src="国旗/老挝.png" alt="">
+老挝 +856
+</div>
+<div class="country-item" data-code="+855" data-name="柬埔寨">
+<img class="flag" src="国旗/柬埔寨.png" alt="">
+柬埔寨 +855
+</div>
+<div class="country-item" data-code="+84" data-name="越南">
+<img class="flag" src="国旗/越南.png" alt="">
+越南 +84
+</div>
+<div class="country-item" data-code="+60" data-name="马来西亚">
+<img class="flag" src="国旗/马来西亚.png" alt="">
+马来西亚 +60
+</div>
+<div class="country-item" data-code="+65" data-name="新加坡">
+<img class="flag" src="国旗/新加坡.png" alt="">
+新加坡 +65
+</div>
+<div class="country-item" data-code="+673" data-name="文莱">
+<img class="flag" src="国旗/文莱.png" alt="">
+文莱 +673
+</div>
+<div class="country-item" data-code="+62" data-name="印度尼西亚">
+<img class="flag" src="国旗/印度尼西亚.png" alt="">
+印度尼西亚 +62
+</div>
+<div class="country-item" data-code="+63" data-name="菲律宾">
+<img class="flag" src="国旗/菲律宾.png" alt="">
+菲律宾 +63
+</div>
+<div class="country-item" data-code="+670" data-name="东帝汶">
+<img class="flag" src="国旗/东帝汶.png" alt="">
+东帝汶 +670
+</div>
+<div class="country-item" data-code="+976" data-name="蒙古">
+<img class="flag" src="国旗/蒙古.png" alt="">
+蒙古 +976
+</div>
+<div class="country-item" data-code="+82" data-name="韩国">
+<img class="flag" src="国旗/韩国.png" alt="">
+韩国 +82
+</div>
+<div class="country-item" data-code="+850" data-name="朝鲜">
+<img class="flag" src="国旗/朝鲜.png" alt="">
+朝鲜 +850
+</div>
+<div class="country-item" data-code="+81" data-name="日本">
+<img class="flag" src="国旗/日本.png" alt="">
+日本 +81
+</div>
+<div class="country-item" data-code="+997" data-name="哈萨克斯坦（新）">
+<img class="flag" src="国旗/哈萨克斯坦.png" alt="">
+哈萨克斯坦（新） +997
+</div>
+<div class="country-item" data-code="+7" data-name="哈萨克斯坦（旧）">
+<img class="flag" src="国旗/哈萨克斯坦.png" alt="">
+哈萨克斯坦（旧） +7
+</div>
+<div class="country-item" data-code="+996" data-name="吉尔吉斯斯坦">
+<img class="flag" src="国旗/吉尔吉斯斯坦.png" alt="">
+吉尔吉斯斯坦 +996
+</div>
+<div class="country-item" data-code="+992" data-name="塔吉克斯坦">
+<img class="flag" src="国旗/塔吉克斯坦.png" alt="">
+塔吉克斯坦 +992
+</div>
+<div class="country-item" data-code="+998" data-name="乌兹别克斯坦">
+<img class="flag" src="国旗/乌兹别克斯坦.png" alt="">
+乌兹别克斯坦 +998
+</div>
+<div class="country-item" data-code="+993" data-name="土库曼斯坦">
+<img class="flag" src="国旗/土库曼斯坦.png" alt="">
+土库曼斯坦 +993
+</div>
+<div class="country-item" data-code="+995" data-name="格鲁吉亚">
+<img class="flag" src="国旗/格鲁吉亚.png" alt="">
+格鲁吉亚 +995
+</div>
+<div class="country-item" data-code="+374" data-name="亚美尼亚">
+<img class="flag" src="国旗/亚美尼亚.png" alt="">
+亚美尼亚 +374
+</div>
+<div class="country-item" data-code="+994" data-name="阿塞拜疆">
+<img class="flag" src="国旗/阿塞拜疆.png" alt="">
+阿塞拜疆 +994
+</div>
+<div class="country-item" data-code="+966" data-name="沙特阿拉伯">
+<img class="flag" src="国旗/沙特阿拉伯.png" alt="">
+沙特阿拉伯 +966
+</div>
+<div class="country-item" data-code="+973" data-name="巴林">
+<img class="flag" src="国旗/巴林.png" alt="">
+巴林 +973
+</div>
+<div class="country-item" data-code="+974" data-name="卡塔尔">
+<img class="flag" src="国旗/卡塔尔.png" alt="">
+卡塔尔 +974
+</div>
+<div class="country-item" data-code="+965" data-name="科威特">
+<img class="flag" src="国旗/科威特.png" alt="">
+科威特 +965
+</div>
+<div class="country-item" data-code="+971" data-name="阿联酋">
+<img class="flag" src="国旗/阿联酋.png" alt="">
+阿联酋 +971
+</div>
+<div class="country-item" data-code="+968" data-name="阿曼">
+<img class="flag" src="国旗/阿曼.png" alt="">
+阿曼 +968
+</div>
+<div class="country-item" data-code="+967" data-name="也门">
+<img class="flag" src="国旗/也门.png" alt="">
+也门 +967
+</div>
+<div class="country-item" data-code="+962" data-name="约旦">
+<img class="flag" src="国旗/约旦.png" alt="">
+约旦 +962
+</div>
+<div class="country-item" data-code="+961" data-name="黎巴嫩">
+<img class="flag" src="国旗/黎巴嫩.png" alt="">
+黎巴嫩 +961
+</div>
+<div class="country-item" data-code="+963" data-name="叙利亚">
+<img class="flag" src="国旗/叙利亚.png" alt="">
+叙利亚 +963
+</div>
+<div class="country-item" data-code="+964" data-name="伊拉克">
+<img class="flag" src="国旗/伊拉克.png" alt="">
+伊拉克 +964
+</div>
+<div class="country-item" data-code="+98" data-name="伊朗">
+<img class="flag" src="国旗/伊朗.png" alt="">
+伊朗 +98
+</div>
+<div class="country-item" data-code="+972" data-name="以色列">
+<img class="flag" src="国旗/以色列.png" alt="">
+以色列 +972
+</div>
+<div class="country-item" data-code="+970" data-name="巴勒斯坦">
+<img class="flag" src="国旗/巴勒斯坦.png" alt="">
+巴勒斯坦 +970
+</div>
+<div class="country-item" data-code="+90" data-name="土耳其">
+<img class="flag" src="国旗/土耳其.png" alt="">
+土耳其 +90
+</div>
+<div class="country-item" data-code="+357" data-name="塞浦路斯">
+<img class="flag" src="国旗/塞浦路斯.png" alt="">
+塞浦路斯 +357
+</div>
+<div class="country-group-title">欧洲地区</div>
+<div class="country-item" data-code="+7" data-name="俄罗斯">
+<img class="flag" src="国旗/俄罗斯.png" alt="">
+俄罗斯 +7
+</div>
+<div class="country-item" data-code="+47" data-name="挪威">
+<img class="flag" src="国旗/挪威.png" alt="">
+挪威 +47
+</div>
+<div class="country-item" data-code="+46" data-name="瑞典">
+<img class="flag" src="国旗/瑞典.png" alt="">
+瑞典 +46
+</div>
+<div class="country-item" data-code="+45" data-name="丹麦">
+<img class="flag" src="国旗/丹麦.png" alt="">
+丹麦 +45
+</div>
+<div class="country-item" data-code="+358" data-name="芬兰">
+<img class="flag" src="国旗/芬兰.png" alt="">
+芬兰 +358
+</div>
+<div class="country-item" data-code="+44" data-name="英国">
+<img class="flag" src="国旗/英国.png" alt="">
+英国 +44
+</div>
+<div class="country-item" data-code="+353" data-name="爱尔兰">
+<img class="flag" src="国旗/爱尔兰.png" alt="">
+爱尔兰 +353
+</div>
+<div class="country-item" data-code="+33" data-name="法国">
+<img class="flag" src="国旗/法国.png" alt="">
+法国 +33
+</div>
+<div class="country-item" data-code="+49" data-name="德国">
+<img class="flag" src="国旗/德国.png" alt="">
+德国 +49
+</div>
+<div class="country-item" data-code="+31" data-name="荷兰">
+<img class="flag" src="国旗/荷兰.png" alt="">
+荷兰 +31
+</div>
+<div class="country-item" data-code="+32" data-name="比利时">
+<img class="flag" src="国旗/比利时.png" alt="">
+比利时 +32
+</div>
+<div class="country-item" data-code="+34" data-name="西班牙">
+<img class="flag" src="国旗/西班牙.png" alt="">
+西班牙 +34
+</div>
+<div class="country-item" data-code="+351" data-name="葡萄牙">
+<img class="flag" src="国旗/葡萄牙.png" alt="">
+葡萄牙 +351
+</div>
+<div class="country-item" data-code="+39" data-name="意大利">
+<img class="flag" src="国旗/意大利.png" alt="">
+意大利 +39
+</div>
+<div class="country-item" data-code="+41" data-name="瑞士">
+<img class="flag" src="国旗/瑞士.png" alt="">
+瑞士 +41
+</div>
+<div class="country-item" data-code="+43" data-name="奥地利">
+<img class="flag" src="国旗/奥地利.png" alt="">
+奥地利 +43
+</div>
+<div class="country-item" data-code="+30" data-name="希腊">
+<img class="flag" src="国旗/希腊.png" alt="">
+希腊 +30
+</div>
+<div class="country-item" data-code="+48" data-name="波兰">
+<img class="flag" src="国旗/波兰.png" alt="">
+波兰 +48
+</div>
+<div class="country-item" data-code="+420" data-name="捷克">
+<img class="flag" src="国旗/捷克.png" alt="">
+捷克 +420
+</div>
+<div class="country-item" data-code="+36" data-name="匈牙利">
+<img class="flag" src="国旗/匈牙利.png" alt="">
+匈牙利 +36
+</div>
+<div class="country-item" data-code="+40" data-name="罗马尼亚">
+<img class="flag" src="国旗/罗马尼亚.png" alt="">
+罗马尼亚 +40
+</div>
+<div class="country-item" data-code="+359" data-name="保加利亚">
+<img class="flag" src="国旗/保加利亚.png" alt="">
+保加利亚 +359
+</div>
+<div class="country-item" data-code="+381" data-name="塞尔维亚">
+<img class="flag" src="国旗/塞尔维亚.png" alt="">
+塞尔维亚 +381
+</div>
+<div class="country-item" data-code="+385" data-name="克罗地亚">
+<img class="flag" src="国旗/克罗地亚.png" alt="">
+克罗地亚 +385
+</div>
+<div class="country-item" data-code="+386" data-name="斯洛文尼亚">
+<img class="flag" src="国旗/斯洛文尼亚.png" alt="">
+斯洛文尼亚 +386
+</div>
+<div class="country-item" data-code="+387" data-name="波黑">
+<img class="flag" src="国旗/波黑.png" alt="">
+波斯尼亚 +387
+</div>
+<div class="country-item" data-code="+382" data-name="黑山">
+<img class="flag" src="国旗/黑山.png" alt="">
+黑山 +382
+</div>
+<div class="country-item" data-code="+389" data-name="北马其顿">
+<img class="flag" src="国旗/北马其顿.png" alt="">
+北马其顿 +389
+</div>
+<div class="country-item" data-code="+355" data-name="阿尔巴尼亚">
+<img class="flag" src="国旗/阿尔巴尼亚.png" alt="">
+阿尔巴尼亚 +355
+</div>
+<div class="country-item" data-code="+376" data-name="安道尔">
+<img class="flag" src="国旗/安道尔.png" alt="">
+安道尔 +376
+</div>
+<div class="country-item" data-code="+423" data-name="列支敦士登">
+<img class="flag" src="国旗/列支敦士登.png" alt="">
+列支敦士登 +423
+</div>
+<div class="country-item" data-code="+352" data-name="卢森堡">
+<img class="flag" src="国旗/卢森堡.png" alt="">
+卢森堡 +352
+</div>
+<div class="country-item" data-code="+356" data-name="马耳他">
+<img class="flag" src="国旗/马耳他.png" alt="">
+马耳他 +356
+</div>
+<div class="country-item" data-code="+354" data-name="冰岛">
+<img class="flag" src="国旗/冰岛.png" alt="">
+冰岛 +354
+</div>
+<div class="country-item" data-code="+372" data-name="爱沙尼亚">
+<img class="flag" src="国旗/爱沙尼亚.png" alt="">
+爱沙尼亚 +372
+</div>
+<div class="country-item" data-code="+371" data-name="拉脱维亚">
+<img class="flag" src="国旗/拉脱维亚.png" alt="">
+拉脱维亚 +371
+</div>
+<div class="country-item" data-code="+370" data-name="立陶宛">
+<img class="flag" src="国旗/立陶宛.png" alt="">
+立陶宛 +370
+</div>
+<div class="country-item" data-code="+375" data-name="白俄罗斯">
+<img class="flag" src="国旗/白俄罗斯.png" alt="">
+白俄罗斯 +375
+</div>
+<div class="country-item" data-code="+380" data-name="乌克兰">
+<img class="flag" src="国旗/乌克兰.png" alt="">
+乌克兰 +380
+</div>
+<div class="country-item" data-code="+373" data-name="摩尔多瓦">
+<img class="flag" src="国旗/摩尔多瓦.png" alt="">
+摩尔多瓦 +373
+</div>
+<div class="country-item" data-code="+379" data-name="梵蒂冈">
+<img class="flag" src="国旗/梵蒂冈.png" alt="">
+梵蒂冈 +379
+</div>
+<div class="country-group-title">北美洲地区</div>
+<div class="country-item" data-code="+1" data-name="美国">
+<img class="flag" src="国旗/美国.png" alt="">
+美国 +1
+</div>
+<div class="country-item" data-code="+1" data-name="加拿大">
+<img class="flag" src="国旗/加拿大.png" alt="">
+加拿大 +1
+</div>
+<div class="country-item" data-code="+53" data-name="古巴">
+<img class="flag" src="国旗/古巴.png" alt="">
+古巴 +53
+</div>
+<div class="country-item" data-code="+509" data-name="海地">
+<img class="flag" src="国旗/海地.png" alt="">
+海地 +509
+</div>
+<div class="country-item" data-code="+1809" data-name="多米尼加">
+<img class="flag" src="国旗/多米尼加.png" alt="">
+多米尼加 +1809
+</div>
+<div class="country-item" data-code="+1876" data-name="牙买加">
+<img class="flag" src="国旗/牙买加.png" alt="">
+牙买加 +1876
+</div>
+<div class="country-item" data-code="+1242" data-name="巴哈马">
+<img class="flag" src="国旗/巴哈马.png" alt="">
+巴哈马 +1242
+</div>
+<div class="country-item" data-code="+1246" data-name="巴巴多斯">
+<img class="flag" src="国旗/巴巴多斯.png" alt="">
+巴巴多斯 +1246
+</div>
+<div class="country-item" data-code="+1473" data-name="格林纳达">
+<img class="flag" src="国旗/格林纳达.png" alt="">
+格林纳达 +1473
+</div>
+<div class="country-item" data-code="+1758" data-name="圣卢西亚">
+<img class="flag" src="国旗/圣卢西亚.png" alt="">
+圣卢西亚 +1758
+</div>
+<div class="country-item" data-code="+1784" data-name="圣文森特和格林纳丁斯">
+<img class="flag" src="国旗/圣文森特和格林纳丁斯.png" alt="">
+圣文森特和格林纳丁斯 +1784
+</div>
+<div class="country-item" data-code="+1268" data-name="安提瓜和巴布达">
+<img class="flag" src="国旗/安提瓜和巴布达.png" alt="">
+安提瓜和巴布达 +1268
+</div>
+<div class="country-item" data-code="+1869" data-name="圣基茨和尼维斯">
+<img class="flag" src="国旗/圣基茨和尼维斯.png" alt="">
+圣基茨和尼维斯 +1869
+</div>
+<div class="country-item" data-code="+1767" data-name="多米尼克">
+<img class="flag" src="国旗/多米尼克.png" alt="">
+多米尼克 +1767
+</div>
+<div class="country-item" data-code="+1868" data-name="特立尼达和多巴哥">
+<img class="flag" src="国旗/特立尼达和多巴哥.png" alt="">
+特立尼达和多巴哥 +1868
+</div>
+<div class="country-item" data-code="+1787" data-name="波多黎各">
+<img class="flag" src="国旗/波多黎各.png" alt="">
+波多黎各 +1 787
+</div>
+<div class="country-item" data-code="+1340" data-name="美属维尔京群岛">
+<img class="flag" src="国旗/美属维尔京群岛.png" alt="">
+美属维尔京群岛 +1 340
+</div>
+<div class="country-item" data-code="+1671" data-name="关岛">
+<img class="flag" src="国旗/关岛.png" alt="">
+关岛 +1 671
+</div>
+<div class="country-item" data-code="+1684" data-name="美属萨摩亚">
+<img class="flag" src="国旗/美属萨摩亚.png" alt="">
+美属萨摩亚 +1 684
+</div>
+<div class="country-group-title">南美洲地区</div>
+<div class="country-item" data-code="+55" data-name="巴西">
+<img class="flag" src="国旗/巴西.png" alt="">
+巴西 +55
+</div>
+<div class="country-item" data-code="+54" data-name="阿根廷">
+<img class="flag" src="国旗/阿根廷.png" alt="">
+阿根廷 +54
+</div>
+<div class="country-item" data-code="+56" data-name="智利">
+<img class="flag" src="国旗/智利.png" alt="">
+智利 +56
+</div>
+<div class="country-item" data-code="+51" data-name="秘鲁">
+<img class="flag" src="国旗/秘鲁.png" alt="">
+秘鲁 +51
+</div>
+<div class="country-item" data-code="+57" data-name="哥伦比亚">
+<img class="flag" src="国旗/哥伦比亚.png" alt="">
+哥伦比亚 +57
+</div>
+<div class="country-item" data-code="+58" data-name="委内瑞拉">
+<img class="flag" src="国旗/委内瑞拉.png" alt="">
+委内瑞拉 +58
+</div>
+<div class="country-item" data-code="+506" data-name="哥斯达黎加">
+<img class="flag" src="国旗/哥斯达黎加.png" alt="">
+哥斯达黎加 +506
+</div>
+<div class="country-item" data-code="+507" data-name="巴拿马">
+<img class="flag" src="国旗/巴拿马.png" alt="">
+巴拿马 +507
+</div>
+<div class="country-item" data-code="+503" data-name="萨尔瓦多">
+<img class="flag" src="国旗/萨尔瓦多.png" alt="">
+萨尔瓦多 +503
+</div>
+<div class="country-item" data-code="+504" data-name="洪都拉斯">
+<img class="flag" src="国旗/洪都拉斯.png" alt="">
+洪都拉斯 +504
+</div>
+<div class="country-item" data-code="+505" data-name="尼加拉瓜">
+<img class="flag" src="国旗/尼加拉瓜.png" alt="">
+尼加拉瓜 +505
+</div>
+<div class="country-item" data-code="+502" data-name="危地马拉">
+<img class="flag" src="国旗/危地马拉.png" alt="">
+危地马拉 +502
+</div>
+<div class="country-item" data-code="+501" data-name="伯利兹">
+<img class="flag" src="国旗/伯利兹.png" alt="">
+伯利兹 +501
+</div>
+<div class="country-item" data-code="+52" data-name="墨西哥">
+<img class="flag" src="国旗/墨西哥.png" alt="">
+墨西哥 +52
+</div>
+<div class="country-item" data-code="+598" data-name="乌拉圭">
+<img class="flag" src="国旗/乌拉圭.png" alt="">
+乌拉圭 +598
+</div>
+<div class="country-item" data-code="+593" data-name="厄瓜多尔">
+<img class="flag" src="国旗/厄瓜多尔.png" alt="">
+厄瓜多尔 +593
+</div>
+<div class="country-item" data-code="+591" data-name="玻利维亚">
+<img class="flag" src="国旗/玻利维亚.png" alt="">
+玻利维亚 +591
+</div>
+<div class="country-item" data-code="+595" data-name="巴拉圭">
+<img class="flag" src="国旗/巴拉圭.png" alt="">
+巴拉圭 +595
+</div>
+<div class="country-group-title">非洲地区</div>
+<div class="country-item" data-code="+20" data-name="埃及">
+<img class="flag" src="国旗/埃及.png" alt="">
+埃及 +20
+</div>
+<div class="country-item" data-code="+218" data-name="利比亚">
+<img class="flag" src="国旗/利比亚.png" alt="">
+利比亚 +218
+</div>
+<div class="country-item" data-code="+216" data-name="突尼斯">
+<img class="flag" src="国旗/突尼斯.png" alt="">
+突尼斯 +216
+</div>
+<div class="country-item" data-code="+213" data-name="阿尔及利亚">
+<img class="flag" src="国旗/阿尔及利亚.png" alt="">
+阿尔及利亚 +213
+</div>
+<div class="country-item" data-code="+212" data-name="摩洛哥">
+<img class="flag" src="国旗/摩洛哥.png" alt="">
+摩洛哥 +212
+</div>
+<div class="country-item" data-code="+249" data-name="苏丹">
+<img class="flag" src="国旗/苏丹.png" alt="">
+苏丹 +249
+</div>
+<div class="country-item" data-code="+211" data-name="南苏丹">
+<img class="flag" src="国旗/南苏丹.png" alt="">
+南苏丹 +211
+</div>
+<div class="country-item" data-code="+251" data-name="埃塞俄比亚">
+<img class="flag" src="国旗/埃塞俄比亚.png" alt="">
+埃塞俄比亚 +251
+</div>
+<div class="country-item" data-code="+252" data-name="索马里">
+<img class="flag" src="国旗/索马里.png" alt="">
+索马里 +252
+</div>
+<div class="country-item" data-code="+253" data-name="吉布提">
+<img class="flag" src="国旗/吉布提.png" alt="">
+吉布提 +253
+</div>
+<div class="country-item" data-code="+254" data-name="肯尼亚">
+<img class="flag" src="国旗/肯尼亚.png" alt="">
+肯尼亚 +254
+</div>
+<div class="country-item" data-code="+255" data-name="坦桑尼亚">
+<img class="flag" src="国旗/坦桑尼亚.png" alt="">
+坦桑尼亚 +255
+</div>
+<div class="country-item" data-code="+256" data-name="乌干达">
+<img class="flag" src="国旗/乌干达.png" alt="">
+乌干达 +256
+</div>
+<div class="country-item" data-code="+250" data-name="卢旺达">
+<img class="flag" src="国旗/卢旺达.png" alt="">
+卢旺达 +250
+</div>
+<div class="country-item" data-code="+257" data-name="布隆迪">
+<img class="flag" src="国旗/布隆迪.png" alt="">
+布隆迪 +257
+</div>
+<div class="country-item" data-code="+243" data-name="刚果（金）">
+<img class="flag" src="国旗/刚果（金）.png" alt="">
+刚果（金） +243
+</div>
+<div class="country-item" data-code="+242" data-name="刚果（布）">
+<img class="flag" src="国旗/刚果（布）.png" alt="">
+刚果（布） +242
+</div>
+<div class="country-item" data-code="+241" data-name="加蓬">
+<img class="flag" src="国旗/加蓬.png" alt="">
+加蓬 +241
+</div>
+<div class="country-item" data-code="+236" data-name="中非">
+<img class="flag" src="国旗/中非.png" alt="">
+中非 +236
+</div>
+<div class="country-item" data-code="+237" data-name="喀麦隆">
+<img class="flag" src="国旗/喀麦隆.png" alt="">
+喀麦隆 +237
+</div>
+<div class="country-item" data-code="+235" data-name="乍得">
+<img class="flag" src="国旗/乍得.png" alt="">
+乍得 +235
+</div>
+<div class="country-item" data-code="+240" data-name="赤道几内亚">
+<img class="flag" src="国旗/赤道几内亚.png" alt="">
+赤道几内亚 +240
+</div>
+<div class="country-item" data-code="+239" data-name="圣多美和普林西比">
+<img class="flag" src="国旗/圣多美和普林西比.png" alt="">
+圣多美和普林西比 +239
+</div>
+<div class="country-item" data-code="+234" data-name="尼日利亚">
+<img class="flag" src="国旗/尼日利亚.png" alt="">
+尼日利亚 +234
+</div>
+<div class="country-item" data-code="+229" data-name="贝宁">
+<img class="flag" src="国旗/贝宁.png" alt="">
+贝宁 +229
+</div>
+<div class="country-item" data-code="+228" data-name="多哥">
+<img class="flag" src="国旗/多哥.png" alt="">
+多哥 +228
+</div>
+<div class="country-item" data-code="+233" data-name="加纳">
+<img class="flag" src="国旗/加纳.png" alt="">
+加纳 +233
+</div>
+<div class="country-item" data-code="+225" data-name="科特迪瓦">
+<img class="flag" src="国旗/科特迪瓦.png" alt="">
+科特迪瓦 +225
+</div>
+<div class="country-item" data-code="+226" data-name="布基纳法索">
+<img class="flag" src="国旗/布基纳法索.png" alt="">
+布基纳法索 +226
+</div>
+<div class="country-item" data-code="+223" data-name="马里">
+<img class="flag" src="国旗/马里.png" alt="">
+马里 +223
+</div>
+<div class="country-item" data-code="+221" data-name="塞内加尔">
+<img class="flag" src="国旗/塞内加尔.png" alt="">
+塞内加尔 +221
+</div>
+<div class="country-item" data-code="+220" data-name="冈比亚">
+<img class="flag" src="国旗/冈比亚.png" alt="">
+冈比亚 +220
+</div>
+<div class="country-item" data-code="+224" data-name="几内亚">
+<img class="flag" src="国旗/几内亚.png" alt="">
+几内亚 +224
+</div>
+<div class="country-item" data-code="+245" data-name="几内亚比绍">
+<img class="flag" src="国旗/几内亚比绍.png" alt="">
+几内亚比绍 +245
+</div>
+<div class="country-item" data-code="+232" data-name="塞拉利昂">
+<img class="flag" src="国旗/塞拉利昂.png" alt="">
+塞拉利昂 +232
+</div>
+<div class="country-item" data-code="+231" data-name="利比里亚">
+<img class="flag" src="国旗/利比里亚.png" alt="">
+利比里亚 +231
+</div>
+<div class="country-item" data-code="+222" data-name="毛里塔尼亚">
+<img class="flag" src="国旗/毛里塔尼亚.png" alt="">
+毛里塔尼亚 +222
+</div>
+<div class="country-item" data-code="+227" data-name="尼日尔">
+<img class="flag" src="国旗/尼日尔.png" alt="">
+尼日尔 +227
+</div>
+<div class="country-item" data-code="+238" data-name="佛得角">
+<img class="flag" src="国旗/佛得角.png" alt="">
+佛得角 +238
+</div>
+<div class="country-item" data-code="+248" data-name="塞舌尔">
+<img class="flag" src="国旗/塞舌尔.png" alt="">
+塞舌尔 +248
+</div>
+<div class="country-item" data-code="+230" data-name="毛里求斯">
+<img class="flag" src="国旗/毛里求斯.png" alt="">
+毛里求斯 +230
+</div>
+<div class="country-item" data-code="+269" data-name="科摩罗">
+<img class="flag" src="国旗/科摩罗.png" alt="">
+科摩罗 +269
+</div>
+<div class="country-item" data-code="+261" data-name="马达加斯加">
+<img class="flag" src="国旗/马达加斯加.png" alt="">
+马达加斯加 +261
+</div>
+<div class="country-item" data-code="+27" data-name="南非">
+<img class="flag" src="国旗/南非.png" alt="">
+南非 +27
+</div>
+<div class="country-item" data-code="+267" data-name="博茨瓦纳">
+<img class="flag" src="国旗/博茨瓦纳.png" alt="">
+博茨瓦纳 +267
+</div>
+<div class="country-item" data-code="+266" data-name="莱索托">
+<img class="flag" src="国旗/莱索托.png" alt="">
+莱索托 +266
+</div>
+<div class="country-item" data-code="+268" data-name="斯威士兰">
+<img class="flag" src="国旗/斯威士兰.png" alt="">
+斯威士兰 +268
+</div>
+<div class="country-item" data-code="+263" data-name="津巴布韦">
+<img class="flag" src="国旗/津巴布韦.png" alt="">
+津巴布韦 +263
+</div>
+<div class="country-item" data-code="+260" data-name="赞比亚">
+<img class="flag" src="国旗/赞比亚.png" alt="">
+赞比亚 +260
+</div>
+<div class="country-item" data-code="+265" data-name="马拉维">
+<img class="flag" src="国旗/马拉维.png" alt="">
+马拉维 +265
+</div>
+<div class="country-item" data-code="+258" data-name="莫桑比克">
+<img class="flag" src="国旗/莫桑比克.png" alt="">
+莫桑比克 +258
+</div>
+<div class="country-item" data-code="+244" data-name="安哥拉">
+<img class="flag" src="国旗/安哥拉.png" alt="">
+安哥拉 +244
+</div>
+<div class="country-group-title">大洋洲地区</div>
+<div class="country-item" data-code="+61" data-name="澳大利亚">
+<img class="flag" src="国旗/澳大利亚.png" alt="">
+澳大利亚 +61
+</div>
+<div class="country-item" data-code="+64" data-name="新西兰">
+<img class="flag" src="国旗/新西兰.png" alt="">
+新西兰 +64
+</div>
+<div class="country-item" data-code="+674" data-name="瑙鲁">
+<img class="flag" src="国旗/瑙鲁.png" alt="">
+瑙鲁 +674
+</div>
+<div class="country-item" data-code="+675" data-name="巴布亚新几内亚">
+<img class="flag" src="国旗/巴布亚新几内亚.png" alt="">
+巴布亚新几内亚 +675
+</div>
+<div class="country-item" data-code="+677" data-name="所罗门群岛">
+<img class="flag" src="国旗/所罗门群岛.png" alt="">
+所罗门群岛 +677
+</div>
+<div class="country-item" data-code="+678" data-name="瓦努阿图">
+<img class="flag" src="国旗/瓦努阿图.png" alt="">
+瓦努阿图 +678
+</div>
+<div class="country-item" data-code="+679" data-name="斐济">
+<img class="flag" src="国旗/斐济.png" alt="">
+斐济 +679
+</div>
+<div class="country-item" data-code="+676" data-name="汤加">
+<img class="flag" src="国旗/汤加.png" alt="">
+汤加 +676
+</div>
+<div class="country-item" data-code="+685" data-name="萨摩亚">
+<img class="flag" src="国旗/萨摩亚.png" alt="">
+萨摩亚 +685
+</div>
+<div class="country-item" data-code="+682" data-name="库克群岛">
+<img class="flag" src="国旗/库克群岛.png" alt="">
+库克群岛 +682
+</div>
+<div class="country-item" data-code="+683" data-name="纽埃">
+<img class="flag" src="国旗/纽埃.png" alt="">
+纽埃 +683
+</div>
+<div class="country-item" data-code="+686" data-name="基里巴斯">
+<img class="flag" src="国旗/基里巴斯.png" alt="">
+基里巴斯 +686
+</div>
+<div class="country-item" data-code="+688" data-name="图瓦卢">
+<img class="flag" src="国旗/图瓦卢.png" alt="">
+图瓦卢 +688
+</div>
+<div class="country-item" data-code="+692" data-name="马绍尔群岛">
+<img class="flag" src="国旗/马绍尔群岛.png" alt="">
+马绍尔群岛 +692
+</div>
+<div class="country-item" data-code="+691" data-name="密克罗尼西亚">
+<img class="flag" src="国旗/密克罗尼西亚.png" alt="">
+密克罗尼西亚 +691
+</div>
+<div class="country-item" data-code="+680" data-name="帕劳">
+<img class="flag" src="国旗/帕劳.png" alt="">
+帕劳 +680
+</div>
+</div>
+</div>
+<!-- 竖线分割 -->
+<div class="divider-line"></div>
+<div class="phone-input-box">
+<!-- SVG手机图标，颜色#d2d0cf -->
+<svg class="phone-icon" viewBox="0 0 24 24">
+<path d="M17 1H7c-1.1 0-2 .9-2 2v18c0 1.1.9 2 2 2h10c1.1 0 2-.9 2-2V3c0-1.1-.9-2-2-2zm0 18H7V5h10v14z"/>
+</svg>
+<!-- 清除按钮 -->
+<div class="clear-icon" id="clearIcon">
+<svg viewBox="0 0 24 24">
+<path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+</svg>
+</div>
+<input class="phone-input" id="phoneInput" placeholder="请输入手机号" maxlength="11" type="tel" />
+</div>
+</div>
+</div>
+<!-- ✅修改：错误提示行，内部放span胶囊 -->
+<div class="error-tip-line" id="errorTip"><span class="error-tip-badge"></span></div>
+<button class="get-code-btn" id="getCodeBtn">获取验证码</button>
+</div>
+<!--普通提示弹窗（已移除确认按钮）-->
+<div class="modal-mask" id="modalMask">
+<div class="modal-wrap">
+<div class="modal-body">
+<div class="modal-msg-text" id="modalMsg"></div>
+</div>
+</div>
+</div>
+<!--滑块人机验证弹窗-->
+<div class="slide-modal-mask" id="slideModalMask">
+<div class="slide-modal-wrap">
+<div class="slide-modal-body">
+<div class="slide-title">人机验证</div>
+<div class="slide-box" id="slideBox">
+<div class="slide-progress" id="slideProgress"></div>
+<div class="slide-btn" id="slideBtn">→</div>
+</div>
+<div class="slide-tip" id="slideTip">请拖动滑块完成验证</div>
+</div>
+</div>
+</div>
+<script>
+const phoneInput = document.getElementById('phoneInput');
+const getCodeBtn = document.getElementById('getCodeBtn');
+const modalMask = document.getElementById("modalMask");
+const modalMsg = document.getElementById("modalMsg");
+const backBtn = document.getElementById("backBtn");
+const clearIcon = document.getElementById("clearIcon");
+const errorTip = document.getElementById("errorTip");
+const errorTipBadge = errorTip.querySelector('.error-tip-badge'); //获取胶囊span
+const phoneGroupWrap = document.getElementById("phoneGroupWrap");
+// 设置提示函数，统一控制胶囊显示隐藏
+function setErrorTip(text){
+errorTipBadge.innerText = text;
+if(text && text.trim() !== ""){
+errorTipBadge.classList.add("has-text");
+  }else{
+errorTipBadge.classList.remove("has-text");
+  }
+}
+// ========== 新增：控制获取验证码按钮可用状态 ==========
+function updateGetCodeBtnState(){
+if(currentCountryCode !== "+86"){
+getCodeBtn.disabled = true;
+}else{
+getCodeBtn.disabled = false;
+}
+}
+// 自定义国家码组件
+const countryDisplay = document.getElementById("countryDisplay");
+const countryDropdown = document.getElementById("countryDropdown");
+const countryItems = document.querySelectorAll(".country-item");
+let currentCountryCode = "+86";
+// 初始化执行一次按钮状态
+updateGetCodeBtnState();
+// 滚动防抖计时器（滚动条自动隐藏）
+let scrollTimer = null;
+countryDropdown.addEventListener('scroll', function(){
+this.classList.add('scroll-active');
+clearTimeout(scrollTimer);
+scrollTimer = setTimeout(()=>{
+this.classList.remove('scroll-active');
+  }, 600);
+})
+// 点击展开下拉
+countryDisplay.addEventListener("click", (e)=>{
+e.stopPropagation();
+// 如果处于禁用状态，直接返回，不展开下拉
+if(countryDisplay.classList.contains('disabled')){
+  return;
+}
+countryDropdown.classList.toggle("show");
+})
+
+// 点击选项选中
+countryItems.forEach(item=>{
+item.addEventListener("click", ()=>{
+currentCountryCode = item.dataset.code;
+// 读取当前选中项里的国旗img
+const flagImg = item.querySelector('.flag').cloneNode(true);
+// 清空display容器，放入国旗 + 文字
+countryDisplay.innerHTML = '';
+countryDisplay.appendChild(flagImg);
+countryDisplay.append(' ' + currentCountryCode);
+countryDropdown.classList.remove("show");
+
+// 更新获取验证码按钮状态
+updateGetCodeBtnState();
+// ========== 新增逻辑：切换国家码触发效果 ==========
+if(currentCountryCode !== "+86"){
+// 非+86：晃动 + 外层粉色边框 + 输入框禁用 +【改为下方文字提示，不再弹窗】
+phoneGroupWrap.classList.add('error-border','shake-anim');
+phoneInput.disabled = true;
+setErrorTip("*当前仅支持中国大陆手机号，请选择:+86");
+// 动画执行完移除shake类，方便下次再次选择时还能触发晃动
+setTimeout(()=>{
+phoneGroupWrap.classList.remove('shake-anim');
+  },300);
+}else{
+// +86：清除错误样式，启用输入框，清空提示文字
+phoneGroupWrap.classList.remove('error-border','shake-anim');
+phoneInput.disabled = false;
+setErrorTip("");
+}
+toggleCountryCodeState();
+})
+})
+// 点击页面空白关闭下拉
+document.addEventListener("click", ()=>{
+countryDropdown.classList.remove("show");
+})
+// 清除按钮逻辑
+function toggleClearIcon(){
+if(phoneInput.value.trim() !== ""){
+clearIcon.style.display = "flex";
+    }else{
+clearIcon.style.display = "none";
+    }
+}
+// 【核心新增】控制国家码下拉框可用状态
+function toggleCountryCodeState(){
+const val = phoneInput.value.trim();
+if(val !== ""){
+// 输入框有内容：禁用国家码选择，清除错误边框
+countryDisplay.classList.add("disabled");
+phoneGroupWrap.classList.remove("error-border");
+countryDropdown.classList.remove("show");
+}else{
+// 输入框为空：启用国家码选择
+countryDisplay.classList.remove("disabled");
+}
+}
+// 输入监听：过滤非数字 + 控制清除按钮显示 +【新增：输入合法自动移除粉色边框、清空提示】+ 控制国家码状态
+phoneInput.addEventListener('input', function(e) {
+this.value = this.value.replace(/\D/g, '');
+toggleClearIcon();
+toggleCountryCodeState();
+const val = this.value.trim();
+if(phoneReg.test(val)){
+phoneGroupWrap.classList.remove('error-border');
+setErrorTip(""); //输入正确清空提示
+}
+});
+// 粘贴拦截，过滤非数字并限制最多11位
+phoneInput.addEventListener('paste', function(e){
+e.preventDefault();
+const pasteText = (e.clipboardData || window.clipboardData).getData('text');
+const onlyNum = pasteText.replace(/\D/g,'');
+this.value = onlyNum.slice(0,11);
+toggleClearIcon();
+toggleCountryCodeState();
+const val = this.value.trim();
+if(phoneReg.test(val)){
+phoneGroupWrap.classList.remove('error-border');
+setErrorTip("");
+}
+})
+clearIcon.addEventListener('click', ()=>{
+phoneInput.value = "";
+toggleClearIcon();
+toggleCountryCodeState(); //清空后恢复国家码可点击
+phoneInput.focus();
+setErrorTip(""); //清空输入框同时清空提示
+})
+//滑块元素
+const slideModalMask = document.getElementById("slideModalMask");
+const slideBox = document.getElementById("slideBox");
+const slideBtn = document.getElementById("slideBtn");
+const slideProgress = document.getElementById("slideProgress");
+const slideTip = document.getElementById("slideTip");
+let slideVerified = false;
+let isDrag = false;
+let maxW = 0;
+let targetPhone = "";
+const ONE_HOUR = 60 * 60 * 1000;
+// 中国大陆手机号正则
+const phoneReg = /^1(3[0-9]|4[579]|5[0-3,5-9]|6[2567]|7[0-8]|8[0-9]|9[0-3,5-9])\d{8}$/;
+// 返回按钮跳转
+backBtn.addEventListener('click', ()=>{
+location.href = "../登陆页/登陆页.html";
+});
+let modalTimer = null;
+function openModal(msg){
+modalMsg.innerText = msg;
+modalMask.classList.add("show");
+if(modalTimer) clearTimeout(modalTimer);
+modalTimer = setTimeout(()=>{
+closeModal();
+},3000);
+}
+function closeModal(){
+if(modalTimer) clearTimeout(modalTimer);
+modalMask.classList.remove("show");
+}
+function openSlideModal(){
+slideVerified = false;
+slideBtn.style.left = "0px";
+slideProgress.style.width = "0%";
+slideTip.textContent = "请拖动滑块完成验证";
+slideTip.style.color="#666";
+slideBtn.style.background="#fff";
+slideModalMask.classList.add("show");
+setTimeout(()=>{
+maxW = slideBox.clientWidth - slideBtn.offsetWidth;
+},10)
+}
+function closeSlideModal(){
+slideModalMask.classList.remove("show");
+}
+//读取当前手机号一小时内发送记录
+function getSmsRecords(phone){
+const key = "sms_send_records_" + phone;
+const raw = localStorage.getItem(key);
+let list = raw ? JSON.parse(raw) : [];
+const now = Date.now();
+list = list.filter(ts => now - ts < ONE_HOUR);
+localStorage.setItem(key, JSON.stringify(list));
+return list;
+}
+//添加一条发送记录
+function addSmsRecord(phone){
+const key = "sms_send_records_" + phone;
+const list = getSmsRecords(phone);
+list.push(Date.now());
+localStorage.setItem(key, JSON.stringify(list));
+}
+// 跳转验证码页面
+function goVerifyPage(country, phone){
+location.href = "../验证码输入页/验证码输入页.html?country="+encodeURIComponent(country)+"&phone="+encodeURIComponent(phone);
+}
+getCodeBtn.addEventListener('click', ()=>{
+const val = phoneInput.value.trim();
+const code = currentCountryCode;
+// ========= 删除原来的国家码判断，不再校验code是否+86 =========
+if(!phoneReg.test(val)){
+const msg = "*请输入有效的11位中国大陆手机号";
+setErrorTip(msg); //仅下方提示文字
+// 校验失败：【改为外层容器添加粉色边框 + 晃动动画】
+phoneGroupWrap.classList.add('error-border','shake-anim');
+setTimeout(()=>{
+phoneGroupWrap.classList.remove('shake-anim');
+},300);
+return;
+}
+// 校验通过，清除错误样式
+phoneGroupWrap.classList.remove('error-border','shake-anim');
+setErrorTip(""); //校验通过清空提示
+targetPhone = code + val;
+const records = getSmsRecords(targetPhone);
+if(records.length >=3){
+openSlideModal();
+}else{
+addSmsRecord(targetPhone);
+goVerifyPage(code, val);
+}
+})
+//滑块鼠标事件
+slideBtn.addEventListener('mousedown',(e)=>{
+isDrag = true;
+e.preventDefault();
+})
+document.addEventListener('mousemove',(e)=>{
+if(!isDrag) return;
+const rect = slideBox.getBoundingClientRect();
+let x = e.clientX - rect.left - slideBtn.offsetWidth/2;
+if(x <0) x=0;
+if(x>maxW) x = maxW;
+slideBtn.style.left = x + "px";
+let percent = (x/maxW)*100;
+slideProgress.style.width = percent+"%";
+})
+document.addEventListener('mouseup',()=>{
+if(!isDrag) return;
+isDrag = false;
+const leftVal = parseInt(slideBtn.style.left);
+if(leftVal >= maxW*0.9){
+slideVerified = true;
+slideTip.textContent = "验证成功";
+slideTip.style.color="#00c48c";
+slideBtn.style.background="#00c48c";
+setTimeout(()=>{
+closeSlideModal();
+addSmsRecord(targetPhone);
+goVerifyPage(currentCountryCode, phoneInput.value.trim());
+},600)
+}else{
+slideBtn.style.left = "0px";
+slideProgress.style.width = "0%";
+slideTip.textContent = "验证失败，请重试";
+slideTip.style.color="#f56c6c";
+}
+})
+//移动端触摸
+slideBtn.addEventListener('touchstart',(e)=>{
+isDrag = true;
+})
+document.addEventListener('touchmove',(e)=>{
+if(!isDrag) return;
+e.preventDefault();
+const rect = slideBox.getBoundingClientRect();
+let x = e.touches[0].clientX - rect.left - slideBtn.offsetWidth/2;
+if(x <0) x=0;
+if(x>maxW) x = maxW;
+slideBtn.style.left = x + "px";
+let percent = (x/maxW)*100;
+slideProgress.style.width = percent+"%";
+},{passive:false})
+document.addEventListener('touchend',()=>{
+if(!isDrag) return;
+isDrag = false;
+const leftVal = parseInt(slideBtn.style.left);
+if(leftVal >= maxW*0.9){
+slideVerified = true;
+slideTip.textContent = "验证成功";
+slideTip.style.color="#00c48c";
+slideBtn.style.background="#00c48c";
+setTimeout(()=>{
+closeSlideModal();
+addSmsRecord(targetPhone);
+goVerifyPage(currentCountryCode, phoneInput.value.trim());
+},600)
+}else{
+slideBtn.style.left = "0px";
+slideProgress.style.width = "0%";
+slideTip.textContent = "验证失败，请重试";
+slideTip.style.color="#f56c6c";
+}
+})
+modalMask.addEventListener('click',e=>{if(e.target===modalMask) closeModal();})
+</script>
+</body>
+</html>
