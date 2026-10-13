@@ -1,4 +1,3 @@
-<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8" />
@@ -10,23 +9,23 @@ margin: 0;
 padding: 0;
 box-sizing: border-box;
 font-family: system-ui, -apple-system, BlinkMacSystemFont, "PingFang SC", sans-serif;
-        }
+}
 html, body {
 height: 100%;
-background-color: #d2d0cf;
+background: linear-gradient(180deg, #fcd9e2 0%, #e9e8e8 100%);
 overflow-x: hidden;
-        }
+}
 body {
 display: flex;
 flex-direction: column;
-        }
+}
 /* 返回按钮：绝对定位，脱离文档流，不会挤压/覆盖下方页面内容 */
 .back-icon-wrap {
 position:absolute;
 top:40px;
 left:20px;
 z-index: 10;
-        }
+}
 .back-btn {
 width: 36px;
 height: 36px;
@@ -37,23 +36,23 @@ align-items: center;
 justify-content: center;
 background: #fff;
 cursor: pointer;
-        }
+}
 .back-btn svg {
 width: 18px;
 height: 18px;
 fill: #666;
-        }
+}
 .container{
 flex:1;
 padding: 0 32px;
 padding-top: 100px; /* 增加顶部内边距，避开左上角返回按钮区域 */
-        }
+}
 .card-title {
 font-size: clamp(24px,5vw,36px); /* 动态等比例字号 */
 color: #ffffff;
 font-weight: 600;
 margin-bottom: 12px;
-        }
+}
 .card-desc {
 font-size: clamp(14px,3vw,20px);
 color: #ffffff;
@@ -62,7 +61,7 @@ margin-bottom: 40px;
 white-space: nowrap; /* 强制单行 */
 overflow: hidden;
 text-overflow: ellipsis;
-        }
+}
 /* =========【新增】合并外层容器，国家码+输入框放同一个白色框 ========= */
 .phone-group-wrap {
 width:100%;
@@ -72,6 +71,7 @@ align-items:center;
 background:#fff;
 border-radius:8px;
 position:relative;
+border-bottom: 1px solid #d2d0cf;
 }
 /* 分割竖线 */
 .divider-line {
@@ -294,8 +294,8 @@ height: 48px;
 border-radius: 999px;
 border: none;
 font-size: 18px;
-color: #b8b8b8;
-background: #ffffff;
+color: #fff;
+background: #ec4f8e;
 cursor: pointer;
 transition: all 0.2s;
 margin-top:8px;
@@ -303,6 +303,9 @@ margin-top:8px;
 .get-code-btn:disabled {
 opacity: 0.7;
 cursor: not-allowed;
+}
+.get-code-btn:active{
+background:#d9447c;
 }
 /*==== 半透明提示弹窗（无底部确认按钮，3秒自动消失）====*/
 .modal-mask {
@@ -403,6 +406,23 @@ font-size:14px;
 .slide-modal-mask.show{
 display:flex;
 }
+/* 白色大卡片，包裹输入框+提示+按钮，和截图一致圆角 */
+.white-card{
+width:100%;
+background:#ffffff;
+border-radius:20px; /*截图大圆角*/
+padding:24px 20px;
+}
+/* 修正内部间距，原来的margin-bottom要改小，因为现在在卡片内部padding控制间距 */
+.white-card .phone-input-wrap{
+margin-bottom:8px;
+}
+.white-card .error-tip-line{
+margin-bottom:24px;
+}
+.phone-input-wrap{
+background:transparent;
+}
 /* 适配手机小屏 */
 @media (max-width: 480px) {
 .container{
@@ -412,8 +432,13 @@ padding-top: 90px; /* 小屏保持足够顶部距离，避开返回按钮 */
 .card-desc{
 margin-bottom:28px;
 }
+.white-card{
+padding:18px 16px;
+border-radius:16px;
+}
 .phone-input-wrap{
 margin-bottom:8px;
+background:transparent;
 }
 .error-tip-line{
 margin-bottom:20px;
@@ -425,6 +450,7 @@ padding:2px 10px;
 }
 .phone-group-wrap{
 height:48px;
+border-bottom: 1px solid #d2d0cf;
 }
 .country-code-wrap{
 min-width:90px;
@@ -489,6 +515,7 @@ height:20px;
 <div class="container">
 <div class="card-title">输入你的手机号</div>
 <div class="card-desc">请输入你的手机号，点击获取验证码完成验证</div>
+<div class="white-card">
 <div class="phone-input-wrap">
 <!-- 【HTML改动：外层统一容器，国家码 | 分割线 | 输入框 -->
 <div class="phone-group-wrap" id="phoneGroupWrap">
@@ -1316,6 +1343,7 @@ height:20px;
 <div class="error-tip-line" id="errorTip"><span class="error-tip-badge"></span></div>
 <button class="get-code-btn" id="getCodeBtn">获取验证码</button>
 </div>
+</div>
 <!--普通提示弹窗（已移除确认按钮）-->
 <div class="modal-mask" id="modalMask">
 <div class="modal-wrap">
@@ -1352,9 +1380,9 @@ function setErrorTip(text){
 errorTipBadge.innerText = text;
 if(text && text.trim() !== ""){
 errorTipBadge.classList.add("has-text");
-  }else{
+}else{
 errorTipBadge.classList.remove("has-text");
-  }
+}
 }
 // ========== 新增：控制获取验证码按钮可用状态 ==========
 function updateGetCodeBtnState(){
@@ -1378,18 +1406,17 @@ this.classList.add('scroll-active');
 clearTimeout(scrollTimer);
 scrollTimer = setTimeout(()=>{
 this.classList.remove('scroll-active');
-  }, 600);
+}, 600);
 })
 // 点击展开下拉
 countryDisplay.addEventListener("click", (e)=>{
 e.stopPropagation();
 // 如果处于禁用状态，直接返回，不展开下拉
 if(countryDisplay.classList.contains('disabled')){
-  return;
+return;
 }
 countryDropdown.classList.toggle("show");
 })
-
 // 点击选项选中
 countryItems.forEach(item=>{
 item.addEventListener("click", ()=>{
@@ -1401,7 +1428,6 @@ countryDisplay.innerHTML = '';
 countryDisplay.appendChild(flagImg);
 countryDisplay.append(' ' + currentCountryCode);
 countryDropdown.classList.remove("show");
-
 // 更新获取验证码按钮状态
 updateGetCodeBtnState();
 // ========== 新增逻辑：切换国家码触发效果 ==========
@@ -1413,7 +1439,7 @@ setErrorTip("*当前仅支持中国大陆手机号，请选择:+86");
 // 动画执行完移除shake类，方便下次再次选择时还能触发晃动
 setTimeout(()=>{
 phoneGroupWrap.classList.remove('shake-anim');
-  },300);
+},300);
 }else{
 // +86：清除错误样式，启用输入框，清空提示文字
 phoneGroupWrap.classList.remove('error-border','shake-anim');
@@ -1431,9 +1457,9 @@ countryDropdown.classList.remove("show");
 function toggleClearIcon(){
 if(phoneInput.value.trim() !== ""){
 clearIcon.style.display = "flex";
-    }else{
+}else{
 clearIcon.style.display = "none";
-    }
+}
 }
 // 【核心新增】控制国家码下拉框可用状态
 function toggleCountryCodeState(){
