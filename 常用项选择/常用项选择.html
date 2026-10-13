@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>健康小忌</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+    html, body {
+      margin: 0;
+      padding: 0;
+      overflow-x: hidden;
+    }
+    body {
+      touch-action: pan-y;
+    }
+    .icon-wrap {
+      width: clamp(60px, 16vw, 72px);
+      height: clamp(60px, 16vw, 72px);
+    }
+    @media (max-width:400px) {
+      .icon-wrap {
+        width: clamp(50px,16vw,60px);
+        height: clamp(50px,16vw,60px);
+      }
+    }
+    .icon-item {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      cursor: grab;
+      touch-action: pan-y;
+      user-select: none;
+    }
+    .icon-item:active {
+      cursor: grabbing;
+    }
+    .icon-item.dragging {
+      opacity: 0.4;
+    }
+    .icon-item.drag-over {
+      outline: 2px dashed #ffffff;
+      outline-offset: 4px;
+    }
+    .placeholder {
+      background: rgba(255,255,255,0.35);
+      border:1px dashed #fff;
+      border-radius: 8px;
+    }
+    .minus-btn {
+      position: absolute;
+      top: -4px;
+      right: -4px;
+      width: 26px;
+      height: 26px;
+      background-color: #ef4444;
+      color: #ffffff;
+      border-radius: 999px;
+      display: none;
+      justify-content: center;
+      align-items: center;
+      font-weight: 800;
+      font-size: 20px;
+      line-height: 26px;
+      text-align: center;
+      z-index: 10;
+      cursor: pointer;
+    }
+    .plus-btn {
+      position: absolute;
+      top: -4px;
+      right: -4px;
+      width: 26px;
+      height: 26px;
+      background-color: #22c55e;
+      color: #ffffff;
+      border-radius: 999px;
+      display: none;
+      justify-content: center;
+      align-items: center;
+      font-weight: 800;
+      font-size: 20px;
+      line-height: 26px;
+      text-align: center;
+      z-index: 10;
+      transition: background-color 0.2s;
+      cursor: pointer;
+    }
+    .plus-btn.used {
+      background-color: #9ca3af;
+      pointer-events: none;
+    }
+    .edit-mode .minus-btn {
+      display: flex;
+    }
+    .edit-mode .plus-btn {
+      display: flex;
+    }
+    .common-list {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: clamp(8px,2vw,12px) clamp(6px,1.5vw,8px);
+    }
+    .other-list {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: clamp(8px,2vw,12px) clamp(6px,1.5vw,8px);
+    }
+    #backBtn {
+      width: 32px;
+      height: 32px;
+      border-radius: 999px;
+      border: 1px solid #c4c1c1;
+      background: transparent;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      color:#c4c1c1;
+    }
+    #editBtn {
+      border:1px solid #ffffff;
+      background:transparent;
+      border-radius:999px;
+    }
+    .header-wrap{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      position:relative;
+      margin-bottom:24px;
+    }
+    .header-title{
+      position:absolute;
+      left:0;
+      right:0;
+      text-align:center;
+      z-index:0;
+    }
+    .header-back{
+      z-index:1;
+    }
+    .card-block{
+      border-radius: 2rem;
+      padding: clamp(14px,4vw,16px);
+      margin-bottom: clamp(12px,3vw,16px);
+    }
+    /* 超限提示弹窗 */
+    .tip-toast{
+      position: fixed;
+      left: 50%;
+      top: 45%;
+      transform: translate(-50%,-50%);
+      background: rgba(0,0,0,0.65);
+      color:#fff;
+      padding:12px 20px;
+      border-radius:12px;
+      font-size:14px;
+      z-index:9999;
+      opacity:0;
+      pointer-events:none;
+      transition:opacity 0.2s;
+    }
+    .tip-toast.show{
+      opacity:1;
+      pointer-events:auto;
+    }
+  </style>
+</head>
+<body class="bg-white min-h-screen">
+  <div class="max-w-lg mx-auto px-4 py-6">
+    <div class="header-wrap">
+      <div class="header-back">
+        <button id="backBtn">←</button>
+      </div>
+      <div class="header-title">
+        <h1 class="text-xl font-medium" style="color: #c4c1c1;">健康小忌</h1>
+      </div>
+    </div>
+
+    <div id="card-common" class="card-block" style="background-color: #c4c1c1;">
+      <div class="flex justify-between items-center mb-4">
+        <span class="text-lg font-medium" style="color: #ffffff;">常用</span>
+        <button id="editBtn" class="px-3 py-1 text-sm font-medium" style="color: #ffffff;">编辑</button>
+      </div>
+      <div id="commonList" class="common-list">
+        <div class="icon-item" data-name="熬夜" draggable="true">
+          <div class="minus-btn">−</div>
+          <div class="icon-wrap rounded-full bg-white overflow-hidden">
+            <img src="" alt="熬夜" class="w-full h-full object-cover">
+          </div>
+          <p class="mt-1 text-sm font-bold" style="color: #ffffff;">熬夜</p>
+        </div>
+        <div class="icon-item" data-name="暴食" draggable="true">
+          <div class="minus-btn">−</div>
+          <div class="icon-wrap rounded-full bg-white overflow-hidden">
+            <img src="" alt="暴食" class="w-full h-full object-cover">
+          </div>
+          <p class="mt-1 text-sm font-bold" style="color: #ffffff;">暴食</p>
+        </div>
+        <div class="icon-item" data-name="久坐" draggable="true">
+          <div class="minus-btn">−</div>
+          <div class="icon-wrap rounded-full bg-white overflow-hidden">
+            <img src="" alt="久坐" class="w-full h-full object-cover">
+          </div>
+          <p class="mt-1 text-sm font-bold" style="color: #ffffff;">久坐</p>
+        </div>
+        <div class="icon-item" data-name="贪凉" draggable="true">
+          <div class="minus-btn">−</div>
+          <div class="icon-wrap rounded-full bg-white overflow-hidden">
+            <img src="" alt="贪凉" class="w-full h-full object-cover">
+          </div>
+          <p class="mt-1 text-sm font-bold" style="color: #ffffff;">贪凉</p>
+        </div>
+        <div class="icon-item" data-name="过劳" draggable="true">
+          <div class="minus-btn">−</div>
+          <div class="icon-wrap rounded-full bg-white overflow-hidden">
+            <img src="" alt="过劳" class="w-full h-full object-cover">
+          </div>
+          <p class="mt-1 text-sm font-bold" style="color: #ffffff;">过劳</p>
+        </div>
+      </div>
+    </div>
+
+    <div id="card-habit" class="card-block" style="background-color: #c4c1c1;">
+      <div class="mb-4">
+        <span class="text-lg font-medium" style="color: #ffffff;">习惯列表</span>
+      </div>
+      <div class="other-list">
+        <div class="icon-item" data-name="熬夜">
+          <div class="plus-btn">+</div>
+          <div class="icon-wrap rounded-full bg-white overflow-hidden">
+            <img src="" alt="熬夜" class="w-full h-full object-cover">
+          </div>
+          <p class="mt-1 text-sm font-bold" style="color: #ffffff;">熬夜</p>
+        </div>
+        <div class="icon-item" data-name="暴食">
+          <div class="plus-btn">+</div>
+          <div class="icon-wrap rounded-full bg-white overflow-hidden">
+            <img src="" alt="暴食" class="w-full h-full object-cover">
+          </div>
+          <p class="mt-1 text-sm font-bold" style="color: #ffffff;">暴食</p>
+        </div>
+        <div class="icon-item" data-name="久坐">
+          <div class="plus-btn">+</div>
+          <div class="icon-wrap rounded-full bg-white overflow-hidden">
+            <img src="" alt="久坐" class="w-full h-full object-cover">
+          </div>
+          <p class="mt-1 text-sm font-bold" style="color: #ffffff;">久坐</p>
+        </div>
+        <div class="icon-item" data-name="贪凉">
+          <div class="plus-btn">+</div>
+          <div class="icon-wrap rounded-full bg-white overflow-hidden">
+            <img src="" alt="贪凉" class="w-full h-full object-cover">
+          </div>
+          <p class="mt-1 text-sm font-bold" style="color: #ffffff;">贪凉</p>
+        </div>
+        <div class="icon-item" data-name="过劳">
+          <div class="plus-btn">+</div>
+          <div class="icon-wrap rounded-full bg-white overflow-hidden">
+            <img src="" alt="过劳" class="w-full h-full object-cover">
+          </div>
+          <p class="mt-1 text-sm font-bold" style="color: #ffffff;">过劳</p>
+        </div>
+        <div class="icon-item" data-name="酗酒">
+          <div class="plus-btn">+</div>
+          <div class="icon-wrap rounded-full bg-white overflow-hidden">
+            <img src="" alt="酗酒" class="w-full h-full object-cover">
+          </div>
+          <p class="mt-1 text-sm font-bold" style="color: #ffffff;">酗酒</p>
+        </div>
+      </div>
+    </div>
+
+    <div id="card-emotion" class="card-block" style="background-color: #c4c1c1;">
+      <div class="mb-4">
+        <span class="text-lg font-medium" style="color: #ffffff;">情绪列表</span>
+      </div>
+      <div class="other-list">
+        <div class="icon-item" data-name="郁结">
+          <div class="plus-btn">+</div>
+          <div class="icon-wrap rounded-full bg-white overflow-hidden">
+            <img src="" alt="郁结" class="w-full h-full object-cover">
+          </div>
+          <p class="mt-1 text-sm font-bold" style="color: #ffffff;">郁结</p>
+        </div>
+        <div class="icon-item" data-name="暴怒">
+          <div class="plus-btn">+</div>
+          <div class="icon-wrap rounded-full bg-white overflow-hidden">
+            <img src="" alt="暴怒" class="w-full h-full object-cover">
+          </div>
+          <p class="mt-1 text-sm font-bold" style="color: #ffffff;">暴怒</p>
+        </div>
+        <div class="icon-item" data-name="忧思">
+          <div class="plus-btn">+</div>
+          <div class="icon-wrap rounded-full bg-white overflow-hidden">
+            <img src="" alt="忧思" class="w-full h-full object-cover">
+          </div>
+          <p class="mt-1 text-sm font-bold" style="color: #ffffff;">忧思</p>
+        </div>
+        <div class="icon-item" data-name="压抑">
+          <div class="plus-btn">+</div>
+          <div class="icon-wrap rounded-full bg-white overflow-hidden">
+            <img src="" alt="压抑" class="w-full h-full object-cover">
+          </div>
+          <p class="mt-1 text-sm font-bold" style="color: #ffffff;">压抑</p>
+        </div>
+      </div>
+    </div>
+
+    <div id="card-food" class="card-block" style="background-color: #c4c1c1;">
+      <div class="mb-4">
+        <span class="text-lg font-medium" style="color: #ffffff;">饮食列表</span>
+      </div>
+      <div class="other-list">
+        <div class="icon-item" data-name="高糖">
+          <div class="plus-btn">+</div>
+          <div class="icon-wrap rounded-full bg-white overflow-hidden">
+            <img src="" alt="高糖" class="w-full h-full object-cover">
+          </div>
+          <p class="mt-1 text-sm font-bold" style="color: #ffffff;">高糖</p>
+        </div>
+        <div class="icon-item" data-name="高脂">
+          <div class="plus-btn">+</div>
+          <div class="icon-wrap rounded-full bg-white overflow-hidden">
+            <img src="" alt="高脂" class="w-full h-full object-cover">
+          </div>
+          <p class="mt-1 text-sm font-bold" style="color: #ffffff;">高脂</p>
+        </div>
+        <div class="icon-item" data-name="重盐">
+          <div class="plus-btn">+</div>
+          <div class="icon-wrap rounded-full bg-white overflow-hidden">
+            <img src="" alt="重盐" class="w-full h-full object-cover">
+          </div>
+          <p class="mt-1 text-sm font-bold" style="color: #ffffff;">重盐</p>
+        </div>
+        <div class="icon-item" data-name="浓咖啡">
+          <div class="plus-btn">+</div>
+          <div class="icon-wrap rounded-full bg-white overflow-hidden">
+            <img src="" alt="浓咖啡" class="w-full h-full object-cover">
+          </div>
+          <p class="mt-1 text-sm font-bold" style="color: #ffffff;">浓咖啡</p>
+        </div>
+      </div>
+    </div>
+
+    <div id="card-care" class="card-block" style="background-color: #c4c1c1;">
+      <div class="mb-4">
+        <span class="text-lg font-medium" style="color: #ffffff;">养护列表</span>
+      </div>
+      <div class="other-list">
+        <div class="icon-item" data-name="忽视补钙">
+          <div class="plus-btn">+</div>
+          <div class="icon-wrap rounded-full bg-white overflow-hidden">
+            <img src="" alt="忽视补钙" class="w-full h-full object-cover">
+          </div>
+          <p class="mt-1 text-sm font-bold" style="color: #ffffff;">忽视补钙</p>
+        </div>
+        <div class="icon-item" data-name="过度节食">
+          <div class="plus-btn">+</div>
+          <div class="icon-wrap rounded-full bg-white overflow-hidden">
+            <img src="" alt="过度节食" class="w-full h-full object-cover">
+          </div>
+          <p class="mt-1 text-sm font-bold" style="color: #ffffff;">过度节食</p>
+        </div>
+        <div class="icon-item" data-name="讳疾忌医">
+          <div class="plus-btn">+</div>
+          <div class="icon-wrap rounded-full bg-white overflow-hidden">
+            <img src="" alt="讳疾忌医" class="w-full h-full object-cover">
+          </div>
+          <p class="mt-1 text-sm font-bold" style="color: #ffffff;">讳疾忌医</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="card-block" style="background-color: #c4c1c1;">
+      <div class="flex justify-between items-center mb-2">
+        <span class="text-lg font-medium" style="color: #ffffff;">备注</span>
+        <span id="noteCount" class="text-sm" style="color: #ffffff;">0/50</span>
+      </div>
+      <textarea id="noteInput" class="w-full h-32 rounded-xl p-3 bg-white outline-none resize-none"></textarea>
+    </div>
+
+    <button class="w-full py-4 rounded-2xl text-lg font-medium" style="background-color: #c4c1c1; color: #ffffff;">保存</button>
+  </div>
+
+  <!-- 超限提示弹窗 -->
+  <div id="toast" class="tip-toast">仅能输入50个字符，超出部分无法保存</div>
+
+<script>
+  const editBtn = document.getElementById('editBtn');
+  const backBtn = document.getElementById('backBtn');
+  const container = document.querySelector('.max-w-lg');
+  const commonListEl = document.getElementById('commonList');
+  const noteInput = document.getElementById('noteInput');
+  const noteCount = document.getElementById('noteCount');
+  const toast = document.getElementById('toast');
+  let isEditMode = false;
+  let placeholder = null;
+  const MAX_CHAR = 50;
+  let toastTimer = null;
+
+  // 弹出提示
+  function showToast() {
+    toast.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(()=>{
+      toast.classList.remove('show');
+    },2000);
+  }
+
+  // 备注输入拦截
+  noteInput.addEventListener('input', function(){
+    if(this.value.length > MAX_CHAR){
+      this.value = this.value.substring(0, MAX_CHAR);
+      showToast();
+    }
+    noteCount.textContent = `${this.value.length}/${MAX_CHAR}`;
+  })
+
+  function syncUsedStatus() {
+    const commonNames = [];
+    document.querySelectorAll('.common-list .icon-item').forEach(item=>{
+      commonNames.push(item.dataset.name);
+    })
+    document.querySelectorAll('.other-list .icon-item').forEach(item=>{
+      const plusBtn = item.querySelector('.plus-btn');
+      if(commonNames.includes(item.dataset.name)){
+        plusBtn.classList.add('used');
+      }else{
+        plusBtn.classList.remove('used');
+      }
+    })
+  }
+
+  function createPlaceholder() {
+    const el = document.createElement('div');
+    el.className = "icon-item placeholder";
+    el.style.height = "110px";
+    return el;
+  }
+
+  document.addEventListener('click', function(e){
+    if(e.target.classList.contains('minus-btn')){
+      const iconItem = e.target.closest('.icon-item');
+      const name = iconItem.dataset.name;
+      iconItem.remove();
+      syncUsedStatus();
+    }
+
+    if(e.target.classList.contains('plus-btn') && !e.target.classList.contains('used')){
+      const sourceItem = e.target.closest('.icon-item');
+      const name = sourceItem.dataset.name;
+      const cloneItem = sourceItem.cloneNode(true);
+      cloneItem.setAttribute('draggable', 'true');
+
+      const plusInClone = cloneItem.querySelector('.plus-btn');
+      plusInClone.classList.remove('plus-btn');
+      plusInClone.classList.add('minus-btn');
+      plusInClone.textContent = '−';
+
+      const label = cloneItem.querySelector('p');
+      if(label) label.style.color = '#ffffff';
+
+      commonListEl.appendChild(cloneItem);
+      bindDrag(cloneItem);
+      syncUsedStatus();
+    }
+  })
+
+  editBtn.addEventListener('click', ()=>{
+    isEditMode = !isEditMode;
+    if(isEditMode){
+      editBtn.innerText = "完成";
+      container.classList.add('edit-mode');
+    }else{
+      editBtn.innerText = "编辑";
+      container.classList.remove('edit-mode');
+    }
+  })
+
+  function bindDrag(item){
+    let draggingEl = null;
+
+    item.addEventListener('dragstart', (e)=>{
+      draggingEl = item;
+      item.classList.add('dragging');
+      placeholder = createPlaceholder();
+      e.dataTransfer.effectAllowed = 'move';
+    });
+
+    item.addEventListener('dragend', ()=>{
+      item.classList.remove('dragging');
+      if(placeholder && placeholder.parentNode) placeholder.remove();
+      placeholder = null;
+      draggingEl = null;
+      document.querySelectorAll('.icon-item').forEach(el=>el.classList.remove('drag-over'));
+    });
+
+    item.addEventListener('dragover', (e)=>{
+      e.preventDefault();
+      if(!draggingEl || draggingEl === item) return;
+      if(placeholder && placeholder.parentNode) placeholder.remove();
+      item.parentNode.insertBefore(placeholder, item);
+    });
+
+    item.addEventListener('drop', (e)=>{
+      e.preventDefault();
+      item.classList.remove('drag-over');
+      if(!draggingEl || draggingEl === item) return;
+      commonListEl.insertBefore(draggingEl, item);
+      if(placeholder && placeholder.parentNode) placeholder.remove();
+    });
+
+    item.addEventListener('touchstart', (e)=>{
+      draggingEl = item;
+      item.classList.add('dragging');
+      placeholder = createPlaceholder();
+    }, {passive: true});
+
+    item.addEventListener('touchmove', (e)=>{
+      if(!draggingEl || !placeholder) return;
+      const touch = e.touches[0];
+      const target = document.elementFromPoint(touch.clientX, touch.clientY);
+      const targetItem = target && target.closest('.icon-item');
+      if(targetItem && targetItem !== draggingEl){
+        if(placeholder.parentNode) placeholder.remove();
+        targetItem.parentNode.insertBefore(placeholder, targetItem);
+      }
+    }, {passive: true});
+
+    item.addEventListener('touchend', (e)=>{
+      if(!draggingEl || !placeholder) return;
+      const touch = e.changedTouches[0];
+      const target = document.elementFromPoint(touch.clientX, touch.clientY);
+      const targetItem = target && target.closest('.icon-item');
+      if(targetItem && targetItem !== draggingEl){
+        commonListEl.insertBefore(draggingEl, targetItem);
+      }
+      if(placeholder && placeholder.parentNode) placeholder.remove();
+      draggingEl.classList.remove('dragging');
+      draggingEl = null;
+    });
+  }
+
+  document.querySelectorAll('.common-list .icon-item').forEach(bindDrag);
+  syncUsedStatus();
+</script>
+</body>
+</html>
