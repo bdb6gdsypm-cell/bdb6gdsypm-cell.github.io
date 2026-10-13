@@ -116,7 +116,7 @@ border-radius: 12px; /* 和.code-item圆角保持一致！ */
 pointer-events: none;
 z-index: 5;
 background: conic-gradient(from 0deg, transparent 0deg, #ff78a1 0deg, #ffb8d2 15deg, #ff78a1 30deg, transparent 30deg);
-animation: itemLightRotate 0.9s linear 1;
+animation: itemLightRotate 0.5s linear 2;
 
 mask-image:
   linear-gradient(#000 0 0),
@@ -126,7 +126,7 @@ mask-composite: exclude;
 mask-size: 100% 100%, calc(100% - 4px) calc(100% - 4px);
 mask-position: center, center;
 mask-repeat: no-repeat;
-mask-border-radius: 8px; /* 内层挖空圆角，和外层一致 */
+mask-border-radius: 12px; /* 内层挖空圆角，和外层一致 */
 
 -webkit-mask-image:
   linear-gradient(#000 0 0),
@@ -136,7 +136,7 @@ mask-border-radius: 8px; /* 内层挖空圆角，和外层一致 */
 -webkit-mask-size: 100% 100%, calc(100% - 4px) calc(100% - 4px);
 -webkit-mask-position: center, center;
 -webkit-mask-repeat: no-repeat;
--webkit-mask-border-radius: 8px;
+-webkit-mask-border-radius: 12px;
 }
 
 
@@ -151,7 +151,7 @@ transform: rotate(360deg);
 }
 }
 .code-item.flash {
-animation: flashPink 0.25s ease-out;
+animation: flashPink 0.7s ease-out;
 }
 @keyframes flashPink {
 0% {
