@@ -16,7 +16,6 @@ overflow-x: hidden;
     }
 body {
 touch-action: pan-y;
-/* 原图：左上白，右下角浅薄荷绿渐变 */
 background: linear-gradient(to bottom, #f7e5ec 0%, #fff9f7 100%);
 min-height:100vh;
     }
@@ -54,7 +53,6 @@ background: rgba(255,255,255,0.35);
 border:1px dashed #fff;
 border-radius: 8px;
     }
-/* 减号按钮，和支付宝截图样式对齐，颜色不变 */
 .minus-btn {
 position: absolute;
 top: -4px;
@@ -74,7 +72,6 @@ text-align: center;
 z-index: 10;
 cursor: pointer;
     }
-/* 加号按钮，和截图蓝色圆形加号样式，保留你原来的绿色底色 */
 .plus-btn {
 position: absolute;
 top: -4px;
@@ -105,38 +102,50 @@ display: flex;
 .edit-mode .plus-btn {
 display: flex;
     }
-/* ========== 左右移动箭头【放到文字左右，水平垂直居中对齐】 ========== */
+
+/* ========== 左右移动箭头：仅编辑模式可用淡入淡出 ========== */
 .move-left, .move-right {
 position: absolute;
 top: 50%;
-transform: translateY(-50%); /* 垂直居中核心 */
-width: 16px; /* ← 箭头按钮整体宽度，调箭头大小 */
-height:16px;/* ← 箭头按钮整体高度，调箭头大小 */
-border-radius:999px;
-background:#c8a2a8;
-color:#fff;
-border:none;
-display:none;
-justify-content:center;
-align-items:center;
-font-size:10px;/* ← 箭头符号「← →」文字字号，调箭头里面符号大小 */
-cursor:pointer;
-z-index:9;
+transform: translateY(-50%);
+width: 16px;
+height: 16px;
+border-radius: 999px;
+background: #c8a2a8;
+color: #fff;
+border: none;
+justify-content: center;
+align-items: center;
+font-size: 10px;
+cursor: pointer;
+z-index: 9;
+
+display: flex;
+opacity: 0;
+pointer-events: none;
+transition: opacity 0.25s ease;
 }
+
 .move-left {
-left: -20px;  /* ← 控制左箭头距离文字的水平距离，数值越大离文字越远 */
+left: -20px;
 }
 .move-right {
-right: -20px; /* ← 控制右箭头距离文字的水平距离，数值越大离文字越远 */
+right: -20px;
 }
+
+/* ✅ 只有处于edit-mode编辑模式，hover图标才淡入箭头 */
+.edit-mode .icon-item:hover .move-left,
+.edit-mode .icon-item:hover .move-right {
+opacity: 1;
+pointer-events: auto;
+}
+
+/* 首尾隐藏 */
 .move-left.hidden,
 .move-right.hidden {
-  display: none !important;
+display: none !important;
 }
-.edit-mode .move-left,
-.edit-mode .move-right {
-display:flex;
-}
+
 .common-list {
 display: grid;
 grid-template-columns: repeat(5, 1fr);
@@ -181,13 +190,11 @@ z-index:0;
 .header-back{
 z-index:1;
     }
-/* 卡片样式：还原图片白色卡片+底部立体投影 */
 .card-block{
 border-radius: 2rem;
 padding: clamp(14px,4vw,16px);
 margin-bottom: clamp(12px,3vw,16px);
 background-color: rgba(255, 255, 255, 0.88);
-/* 多层阴影做出悬浮立体感 */
 box-shadow: 0 10px 30px rgba(180,190,200,0.18),
 0 4px 10px rgba(180,190,200,0.1);
     }
@@ -199,7 +206,6 @@ outline: none;
 border-color: #c8a2a8;
 box-shadow: 0 0 0 3px rgba(200, 162, 168, 0.35);
 }
-/* 超限提示弹窗 */
 .tip-toast{
 position: fixed;
 left: 50%;
@@ -219,11 +225,9 @@ transition:opacity 0.2s;
 opacity:1;
 pointer-events:auto;
     }
-/* 额外分类卡片，默认隐藏 */
 .other-card {
 display: none;
 }
-/* 编辑模式下显示 */
 .edit-mode .other-card {
 display: block;
 }
@@ -252,6 +256,7 @@ color:#8c7877 !important;
 <h1 class="text-xl font-medium" >健康小忌</h1>
 </div>
 </div>
+
 <div id="card-common" class="card-block">
 <div class="flex justify-between items-center mb-4">
 <span class="text-lg font-medium" >常用</span>
@@ -315,7 +320,7 @@ color:#8c7877 !important;
 </div>
 </div>
 </div>
-<!-- 习惯列表：加 class="other-card" -->
+
 <div id="card-habit" class="card-block other-card">
 <div class="mb-4">
 <span class="text-lg font-medium" >习惯列表</span>
@@ -365,7 +370,7 @@ color:#8c7877 !important;
 </div>
 </div>
 </div>
-<!-- 情绪列表：加 class="other-card" -->
+
 <div id="card-emotion" class="card-block other-card">
 <div class="mb-4">
 <span class="text-lg font-medium" >情绪列表</span>
@@ -401,7 +406,7 @@ color:#8c7877 !important;
 </div>
 </div>
 </div>
-<!-- 饮食列表：加 class="other-card" -->
+
 <div id="card-food" class="card-block other-card">
 <div class="mb-4">
 <span class="text-lg font-medium" >饮食列表</span>
@@ -437,7 +442,7 @@ color:#8c7877 !important;
 </div>
 </div>
 </div>
-<!-- 养护列表：加 class="other-card" -->
+
 <div id="card-care" class="card-block other-card">
 <div class="mb-4">
 <span class="text-lg font-medium" >养护列表</span>
@@ -466,6 +471,7 @@ color:#8c7877 !important;
 </div>
 </div>
 </div>
+
 <div class="card-block">
 <div class="flex justify-between items-center mb-2">
 <span class="text-lg font-medium" >备注</span>
@@ -475,8 +481,9 @@ color:#8c7877 !important;
 </div>
 <button class="w-full py-4 rounded-2xl text-lg font-medium" style="background-color: #c8a2a8; color: #ffffff; box-shadow:0 4px 12px rgba(180,150,155,0.15);">保存</button>
 </div>
-<!-- 超限提示弹窗 -->
+
 <div id="toast" class="tip-toast">仅能输入50个字符，超出部分无法保存</div>
+
 <script>
 const editBtn = document.getElementById('editBtn');
 const backBtn = document.getElementById('backBtn');
@@ -485,183 +492,216 @@ const commonListEl = document.getElementById('commonList');
 const noteInput = document.getElementById('noteInput');
 const noteCount = document.getElementById('noteCount');
 const toast = document.getElementById('toast');
+
 let isEditMode = false;
 let placeholder = null;
 const MAX_CHAR = 50;
 let toastTimer = null;
-// 更新左右箭头的隐藏状态
+
 function updateArrowState(){
 const items = Array.from(commonListEl.querySelectorAll('.icon-item'));
 items.forEach((item,idx)=>{
 const leftBtn = item.querySelector('.move-left');
 const rightBtn = item.querySelector('.move-right');
-// 清除旧hidden
+
 leftBtn.classList.remove('hidden');
 rightBtn.classList.remove('hidden');
-// 第一项隐藏左箭头，最后一项隐藏右箭头
+
 if(idx === 0){
-  leftBtn.classList.add('hidden');
+leftBtn.classList.add('hidden');
 }
-if(idx === items.length -1){
-  rightBtn.classList.add('hidden');
+if(idx === items.length - 1){
+rightBtn.classList.add('hidden');
 }
 })
 }
-// 弹出提示
+
 function showToast() {
 toast.classList.add('show');
 clearTimeout(toastTimer);
 toastTimer = setTimeout(()=>{
 toast.classList.remove('show');
-    },2000);
-  }
-// 备注输入拦截
+},2000);
+}
+
 noteInput.addEventListener('input', function(){
 if(this.value.length > MAX_CHAR){
 this.value = this.value.substring(0, MAX_CHAR);
 showToast();
-    }
+}
 noteCount.textContent = `${this.value.length}/${MAX_CHAR}`;
-  })
+})
+
 function syncUsedStatus() {
 const commonNames = [];
 document.querySelectorAll('.common-list .icon-item').forEach(item=>{
 commonNames.push(item.dataset.name);
-    })
+})
+
 document.querySelectorAll('.other-list .icon-item').forEach(item=>{
 const plusBtn = item.querySelector('.plus-btn');
 if(commonNames.includes(item.dataset.name)){
 plusBtn.classList.add('used');
-      }else{
+}else{
 plusBtn.classList.remove('used');
-      }
-    })
+}
+})
+
 updateArrowState();
-  }
+}
+
 function createPlaceholder() {
 const el = document.createElement('div');
 el.className = "icon-item placeholder";
 el.style.height = "110px";
 return el;
-  }
-// 左右移动逻辑
+}
+
 commonListEl.addEventListener('click', function(e){
+// 只有编辑模式才能点击箭头移动
+if (!isEditMode) return;
+
 if(e.target.classList.contains('move-left')){
 const item = e.target.closest('.icon-item');
 const all = Array.from(commonListEl.querySelectorAll('.icon-item'));
 const index = all.indexOf(item);
 if(index <= 0) return;
+
 const prevItem = all[index - 1];
 commonListEl.insertBefore(item, prevItem);
 updateArrowState();
 }
+
 if(e.target.classList.contains('move-right')){
 const item = e.target.closest('.icon-item');
 const all = Array.from(commonListEl.querySelectorAll('.icon-item'));
 const index = all.indexOf(item);
-if(index >= all.length -1) return;
-const nextItem = all[index +1];
+if(index >= all.length - 1) return;
+
+const nextItem = all[index + 1];
 commonListEl.insertBefore(nextItem, item);
 updateArrowState();
 }
 })
+
 document.addEventListener('click', function(e){
 if(e.target.classList.contains('minus-btn')){
 const iconItem = e.target.closest('.icon-item');
-const name = iconItem.dataset.name;
 iconItem.remove();
 syncUsedStatus();
-    }
+}
+
 if(e.target.classList.contains('plus-btn') && !e.target.classList.contains('used')){
 const sourceItem = e.target.closest('.icon-item');
-const name = sourceItem.dataset.name;
 const cloneItem = sourceItem.cloneNode(true);
 cloneItem.setAttribute('draggable', 'true');
+
 const plusInClone = cloneItem.querySelector('.plus-btn');
 plusInClone.classList.remove('plus-btn');
 plusInClone.classList.add('minus-btn');
 plusInClone.textContent = '−';
+
 const label = cloneItem.querySelector('p');
 if(label) {
 label.style.color = '#444';
-// 自动注入左右箭头按钮
 label.innerHTML = `<button class="move-left">←</button>${label.textContent}<button class="move-right">→</button>`;
 }
+
 commonListEl.appendChild(cloneItem);
 bindDrag(cloneItem);
 syncUsedStatus();
-    }
-  })
+}
+})
+
 editBtn.addEventListener('click', ()=>{
 isEditMode = !isEditMode;
+
 if(isEditMode){
 editBtn.innerText = "完成";
 container.classList.add('edit-mode');
 updateArrowState();
-    }else{
+}else{
 editBtn.innerText = "编辑";
 container.classList.remove('edit-mode');
-    }
-  })
+}
+})
+
 function bindDrag(item){
 let draggingEl = null;
+
 item.addEventListener('dragstart', (e)=>{
 draggingEl = item;
 item.classList.add('dragging');
 placeholder = createPlaceholder();
 e.dataTransfer.effectAllowed = 'move';
-    });
+});
+
 item.addEventListener('dragend', ()=>{
 item.classList.remove('dragging');
 if(placeholder && placeholder.parentNode) placeholder.remove();
 placeholder = null;
 draggingEl = null;
+
 document.querySelectorAll('.icon-item').forEach(el=>el.classList.remove('drag-over'));
 updateArrowState();
-    });
+});
+
 item.addEventListener('dragover', (e)=>{
 e.preventDefault();
 if(!draggingEl || draggingEl === item) return;
+
 if(placeholder && placeholder.parentNode) placeholder.remove();
 item.parentNode.insertBefore(placeholder, item);
-    });
+});
+
 item.addEventListener('drop', (e)=>{
 e.preventDefault();
 item.classList.remove('drag-over');
+
 if(!draggingEl || draggingEl === item) return;
 commonListEl.insertBefore(draggingEl, item);
+
 if(placeholder && placeholder.parentNode) placeholder.remove();
 updateArrowState();
-    });
+});
+
 item.addEventListener('touchstart', (e)=>{
 draggingEl = item;
 item.classList.add('dragging');
 placeholder = createPlaceholder();
-    }, {passive: true});
+}, {passive: true});
+
 item.addEventListener('touchmove', (e)=>{
 if(!draggingEl || !placeholder) return;
+
 const touch = e.touches[0];
 const target = document.elementFromPoint(touch.clientX, touch.clientY);
 const targetItem = target && target.closest('.icon-item');
+
 if(targetItem && targetItem !== draggingEl){
 if(placeholder.parentNode) placeholder.remove();
 targetItem.parentNode.insertBefore(placeholder, targetItem);
-      }
-    }, {passive: true});
+}
+}, {passive: true});
+
 item.addEventListener('touchend', (e)=>{
 if(!draggingEl || !placeholder) return;
+
 const touch = e.changedTouches[0];
 const target = document.elementFromPoint(touch.clientX, touch.clientY);
 const targetItem = target && target.closest('.icon-item');
+
 if(targetItem && targetItem !== draggingEl){
 commonListEl.insertBefore(draggingEl, targetItem);
-      }
+}
+
 if(placeholder && placeholder.parentNode) placeholder.remove();
 draggingEl.classList.remove('dragging');
 draggingEl = null;
 updateArrowState();
-    });
-  }
+});
+}
+
 document.querySelectorAll('.common-list .icon-item').forEach(bindDrag);
 syncUsedStatus();
 </script>
