@@ -56,7 +56,7 @@ padding: 18px 24px;
 position: relative;
         }
 .white-card-wrap {
-background: rgba(255,255,255,0.88);
+background: rgba(255, 255, 255, 0.607);
 border-radius: 24px;
 padding: 32px 24px;
 box-shadow: 0 8px 24px rgba(0,0,0,0.06);
@@ -98,7 +98,7 @@ flex: 1;
 max-width: 72px;
 aspect-ratio: 1 / 1;
 background: #ffffff;
-border: 1px solid #d8d8d8a1;
+border: 1.5px solid #c8b9a8;
 border-radius: 12px;
 display: flex;
 align-items: center;
@@ -111,11 +111,14 @@ cursor: pointer;
 transition: transform 0.5s ease, opacity 0.4s ease, border-color 0.3s ease, border-width 0.3s ease;
 overflow: hidden;
 }
-
+/* 当前激活位，粉色边框，平滑过渡 */
+.code-item.active {
+border-color: #eeb8c7;
+}
 .code-item.success-border {
 border: 2px solid #00c48c !important;
 }
-/* 环形流星跑马灯，沿矩形边框顺时针流转 */
+/* 环形流星跑马灯，沿矩形边框顺时针流转，左深右浅 + 流星头部发光圆点 */
 @property --angle {
 syntax: '<angle>';
 initial-value: 0deg;
@@ -128,12 +131,28 @@ border-radius: 12px;
 pointer-events: none;
 z-index: 5;
 padding:2px;
-background: conic-gradient(from var(--angle), transparent 0deg, #ff78a1 0deg, #ffb8d2 20deg, transparent 40deg);
+background: conic-gradient(from var(--angle), transparent 0deg, #ffb8d2 0deg, #ff78a1 20deg, transparent 40deg);
 -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
 mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
 -webkit-mask-composite: xor;
 mask-composite: exclude;
 animation: borderCircleFlow 1s linear 1;
+}
+/* 流星头部发光亮点 */
+.code-item .item-light-border::after {
+content:"";
+position:absolute;
+/* 放到流星头部（20度位置） */
+--dot-angle: calc(var(--angle) + 20deg);
+width:10px;
+height:10px;
+background: radial-gradient(circle, #ffb8d2 0%, rgba(255,120,161,0) 70%);
+border-radius:50%;
+/* 让圆点沿着盒子外圈旋转 */
+offset-path: border-box;
+offset-rotate: var(--dot-angle);
+offset-distance: 0%;
+animation: dotFollow 1s linear 2;
 }
 @keyframes borderCircleFlow {
 from {
@@ -143,18 +162,21 @@ to {
 --angle: 360deg;
   }
 }
-.code-item.flash {
-animation: flashPink 0.7s ease-out;
+@keyframes dotFollow {
+from {
+--angle: 0deg;
 }
-@keyframes flashPink {
-0% {
-border-color: #ffb8d2;
-transform: scale(1.06);
+to {
+--angle: 360deg;
 }
-100% {
-border-color: #ffffff;
-transform: scale(1);
 }
+@keyframes borderCircleFlow {
+from {
+--angle: 0deg;
+  }
+to {
+--angle: 360deg;
+  }
 }
 /* 四个框向中间聚拢成一个框 */
 .code-item.merged {
@@ -251,7 +273,7 @@ border-radius: 12px;
 overflow: hidden;
         }
 .modal-body {
-padding: 24px 20px;
+padding:24px 20px;
 text-align: center;
         }
 .modal-title {
@@ -285,7 +307,7 @@ cursor:pointer;
 .modal-mask.show{
 display:flex;
         }
-/* 滑块验证弹窗 */
+/* ========= 拼图滑块验证弹窗【修复：拖拽拼块同步】 ========= */
 .slide-modal-wrap{
 width:320px;
 background:#fff;
@@ -293,53 +315,122 @@ border-radius:12px;
 overflow:hidden;
 }
 .slide-modal-body{
-padding:24px 20px;
+padding:20px 20px 24px;
 }
 .slide-title{
 text-align:center;
 font-size:18px;
 color:#222;
-margin-bottom:20px;
+margin-bottom:16px;
 }
-.slide-box{
+/* 拼图画布容器 */
+.puzzle-wrap{
 width:100%;
-height:44px;
-background:#e8e8e8;
-border-radius:12px;
+height:180px;
+position:relative;
+border-radius:8px;
+overflow:hidden;
+}
+/* 背景图片 */
+.puzzle-bg-img{
+width:320px;
+height:180px;
+object-fit:cover;
+position:absolute;
+top:0;
+left:0;
+}
+/* 缺口 */
+.puzzle-gap{
+position:absolute;
+top: 68px;
+width: 54px;
+height: 54px;
+filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.55)) drop-shadow(0 -2px 4px rgba(255, 255, 255, 0.25));
+pointer-events:none;
+}
+.puzzle-gap svg{
+width:54px;
+height:54px;
+overflow:visible;
+}
+.gap-path {
+fill: rgba(0, 0, 0, 0.38);
+}
+/* 拖拽拼块 【移除默认transition】 */
+.puzzle-block{
+position:absolute;
+top: 68px;
+left:0px;
+width: 54px;
+height: 54px;
+box-shadow: 0 6px 14px rgba(0, 0, 0, 0.6);
+background-size: 320px 180px;
+background-repeat: no-repeat;
+clip-path: url(#dragClip);
+outline: 2px solid #ffffff;
+outline-offset: 1px;
+}
+/* SVG裁剪定义，放在画布左上角不可见 */
+.puzzle-svg-def{
+position:absolute;width:0;height:0;
+}
+/* 底部拖动条 */
+.puzzle-slider-bar{
+margin-top:14px;
+width:100%;
+height:46px;
+background:#F8E5EB;
+border-radius:24px;
 position:relative;
 overflow:hidden;
 touch-action:none;
 }
-.slide-progress{
+.puzzle-slider-progress{
 position:absolute;
 left:0;
 top:0;
 height:100%;
-background:#409eff;
-width:0%;
+background: linear-gradient(90deg, #F7C9D7, #F2A6BE);
+border-radius:24px;
+width:0px;
 }
-.slide-btn{
-width:44px;
-height:44px;
+.puzzle-slider-btn{
+width:46px;
+height:46px;
 border-radius:50%;
-background:#fff;
-box-shadow:0 0 3px #999;
+background:#E888A6;
+color:#fff;
+box-shadow:0 4px 12px rgba(232, 136, 166, 0.45);
 position:absolute;
 top:0;
-left:0;
+left:0px;
 cursor:grab;
 display:flex;
 align-items:center;
 justify-content:center;
 font-weight:bold;
 user-select:none;
+touch-action: none;
+z-index:3;
+}
+.puzzle-slider-btn:active{
+cursor:grabbing;
+}
+/* 拖拽中状态，取消过渡，实时跟随鼠标不卡顿 */
+.puzzle-slider-bar.dragging .puzzle-slider-btn,
+.puzzle-slider-bar.dragging .puzzle-slider-progress,
+.puzzle-slider-bar.dragging .puzzle-block{
+transition:none;
 }
 .slide-tip{
 text-align:center;
-margin-top:16px;
-color:#666;
+margin-top:12px;
 font-size:14px;
+min-height:20px;
 }
+.slide-success{ color: #38B075; }
+.slide-error{ color: #E25C78; }
 /* 校验结果提示浮窗：半透明，无按钮，自动消失 */
 .toast-mask {
 position: fixed;
@@ -411,14 +502,32 @@ display:flex;
 </div>
 </div>
 </div>
-<!-- 滑块人机验证弹窗 -->
+<!-- 【新版拼图滑块人机验证弹窗｜修复拖拽同步】 -->
 <div class="modal-mask" id="slideModalMask">
 <div class="slide-modal-wrap">
 <div class="slide-modal-body">
 <div class="slide-title">人机验证</div>
-<div class="slide-box" id="slideBox">
-<div class="slide-progress" id="slideProgress"></div>
-<div class="slide-btn" id="slideBtn">→</div>
+<!-- 拼图区域 -->
+<div class="puzzle-wrap" id="puzzleWrap">
+<img class="puzzle-bg-img" id="puzzleBgImg" alt="背景图">
+<svg class="puzzle-svg-def">
+<defs>
+<clipPath id="dragClip">
+<path id="dragPath"></path>
+</clipPath>
+</defs>
+</svg>
+<div class="puzzle-gap" id="puzzleGap">
+<svg viewBox="0 0 54 54">
+<path class="gap-path" id="gapPath"></path>
+</svg>
+</div>
+<div class="puzzle-block" id="puzzleBlock"></div>
+</div>
+<!-- 底部拖动条 -->
+<div class="puzzle-slider-bar" id="puzzleSliderBar">
+<div class="puzzle-slider-progress" id="puzzleSliderProgress"></div>
+<div class="puzzle-slider-btn" id="puzzleSliderBtn">≡</div>
 </div>
 <div class="slide-tip" id="slideTip">请拖动滑块完成验证</div>
 </div>
@@ -443,15 +552,24 @@ const modalTitle = document.getElementById("modalTitle");
 const modalCodeVal = document.getElementById("modalCodeVal");
 const modalTip = document.getElementById("modalTip");
 const modalOkBtn = document.getElementById("modalOkBtn");
-//滑块验证
+// ========= 拼图验证相关变量【原版移植】 =========
 const slideModalMask = document.getElementById("slideModalMask");
-const slideBox = document.getElementById("slideBox");
-const slideBtn = document.getElementById("slideBtn");
-const slideProgress = document.getElementById("slideProgress");
+const puzzleWrap = document.getElementById("puzzleWrap");
+const puzzleBgImg = document.getElementById("puzzleBgImg");
+const puzzleGap = document.getElementById("puzzleGap");
+const gapPathEl = document.getElementById("gapPath");
+const dragPathEl = document.getElementById("dragPath");
+const puzzleBlock = document.getElementById("puzzleBlock");
+const puzzleSliderBar = document.getElementById("puzzleSliderBar");
+const puzzleSliderProgress = document.getElementById("puzzleSliderProgress");
+const puzzleSliderBtn = document.getElementById("puzzleSliderBtn");
 const slideTip = document.getElementById("slideTip");
+const PIECE_SIZE = 54;
 let slideVerified = false;
 let isDrag = false;
-let maxW = 0;
+let targetLeft = 0;
+let bgLoaded = false;
+const TOLERANCE = 6;
 //toast浮窗
 const toastMask = document.getElementById("toastMask");
 const toastText = document.getElementById("toastText");
@@ -544,13 +662,11 @@ box.innerText = codeArr[idx] || "";
 box.classList.remove("active");
 box.classList.remove("merged");
 box.classList.remove("hidden");
-    })
+})
+// 当前光标位置单独激活粉色边框
+if(pos < 4){
+boxes[pos].classList.add("active");
 }
-function triggerFlash(index){
-const box = boxes[index];
-box.classList.remove('flash');
-void box.offsetWidth;
-box.classList.add('flash');
 }
 boxes.forEach(box=>{
 box.addEventListener('click',()=>{
@@ -558,65 +674,56 @@ hiddenInput.focus();
 if(pos<4) boxes[pos].classList.add("active");
     })
 })
-
-// ✅验证成功动画：流星一圈 → 流星+文字【同步一起平滑淡出】→ 四框聚拢倾斜 → 回正+绿边框 → 对勾弹出
+// ✅验证成功动画：流星一圈 → 流星+文字 同步一起平滑淡出 → 四框聚拢倾斜 → 回正+绿边框 → 对勾弹出
 async function runSuccessAnimation(){
 // 验证码按钮渐隐
 resendBtn.style.opacity = "0";
-
 boxes.forEach(box => {
-  // 清理旧流星
-  let oldLight = box.querySelector('.item-light-border');
-  if(oldLight) oldLight.remove();
-
-  // 创建流星
-  let lightBorder = document.createElement('div');
-  lightBorder.className = 'item-light-border';
-  lightBorder.style.transition = 'opacity 0.35s ease';
-  lightBorder.style.opacity = '1';
-  box.appendChild(lightBorder);
-
-  // 文字颜色增加过渡，只控制文字透明度，盒子背景保持白色不变
-  box.style.transition = 'transform 0.5s ease, border-color 0.3s ease, color 0.35s ease';
-  box.style.color = 'rgba(34,34,34,1)';
+// 清理旧流星
+let oldLight = box.querySelector('.item-light-border');
+if(oldLight) oldLight.remove();
+// 创建流星
+let lightBorder = document.createElement('div');
+lightBorder.className = 'item-light-border';
+lightBorder.style.transition = 'opacity 0.35s ease';
+lightBorder.style.opacity = '1';
+box.appendChild(lightBorder);
+// 文字颜色增加过渡，只控制文字透明度，盒子背景保持白色不变
+box.style.transition = 'transform 0.5s ease, border-color 0.3s ease, color 0.35s ease';
+box.style.color = 'rgba(34,34,34,1)';
 });
-
 await sleep(900);
-
 // =========【核心改动：流星 和 数字文字 同步一起淡出】=========
 boxes.forEach(box => {
-  //流星淡出
-  let light = box.querySelector('.item-light-border');
-  if(light) {
-    light.style.opacity = '0';
+//流星淡出
+let light = box.querySelector('.item-light-border');
+if(light) {
+light.style.opacity = '0';
   }
-  //文字颜色透明度降到0，白底盒子保留不变
-  box.style.color = 'rgba(34,34,34,0)';
+//文字颜色透明度降到0，白底盒子保留不变
+box.style.color = 'rgba(34,34,34,0)';
 });
 await sleep(350); //等待两者淡出动画结束
-
 //流星DOM清理
 boxes.forEach(box => {
-  let light = box.querySelector('.item-light-border');
-  if(light) light.remove();
+let light = box.querySelector('.item-light-border');
+if(light) light.remove();
 });
 // =========================================================
-
 // 阶段1：聚拢 + 倾斜（0.5s过渡）
 codeContainer.style.gap = "0px";
 boxes.forEach((box, idx) => {
-  const centerIndex = 1.5;
-  const offset = (centerIndex - idx) * 72;
-  let rotateDeg = 0;
-  if(idx === 0 || idx === 1){
-    rotateDeg = 20;
+const centerIndex = 1.5;
+const offset = (centerIndex - idx) * 72;
+let rotateDeg = 0;
+if(idx === 0 || idx === 1){
+rotateDeg = 20;
   }else if(idx === 2 || idx === 3){
-    rotateDeg = -20;
+rotateDeg = -20;
   }
-  box.style.transform = `translateX(${offset}px) scale(0.85) rotate(${rotateDeg}deg)`;
+box.style.transform = `translateX(${offset}px) scale(0.85) rotate(${rotateDeg}deg)`;
 });
 await sleep(500);
-
 // 阶段2：旋转回正，添加绿色成功边框
 boxes.forEach((box, idx) => {
 const centerIndex = 1.5;
@@ -625,9 +732,7 @@ box.style.transform = `translateX(${offset}px) scale(0.85) rotate(0deg)`;
 box.style.borderWidth = "2px";
 box.classList.add("success-border");
 });
-
 await sleep(300);
-
 // 绿色对勾、提示文字渐显
 successCircle.style.opacity = "1";
 successCheck.style.opacity = "1";
@@ -639,16 +744,72 @@ successText.style.borderRadius = "999px";
 successText.style.opacity = "1";
 successText.style.width = "auto";
 await sleep(1200);
-
 // 跳转
 location.href = "../常用项选择/常用项选择.html";
 }
-
-
-
-
 function sleep(ms){
 return new Promise(resolve=>setTimeout(resolve,ms));
+}
+// ==========原版拼图凹凸形状生成函数 【移植】 =========
+function generateRandomJigsawPath() {
+const tabSize = 8;
+const leftType = Math.floor(Math.random() * 3);
+const rightType = Math.floor(Math.random() * 3);
+let d = `M 10,8 L 44,8 `;
+if (rightType === 0) {
+d += `L 44,46`;
+} else if (rightType === 1) {
+d += `C ${44 + tabSize},22 ${44 + tabSize},32 44,46`;
+} else {
+d += `C ${44 - tabSize},22 ${44 - tabSize},32 44,46`;
+}
+d += ` L 10,46 `;
+if (leftType === 0) {
+d += `L 10,8`;
+} else if (leftType === 1) {
+d += `C ${10 - tabSize},32 ${10 - tabSize},22 10,8`;
+} else {
+d += `C ${10 + tabSize},32 ${10 + tabSize},22 10,8`;
+}
+d += ` Z`;
+return d;
+}
+// 获取缺口目标X坐标
+function getTargetPosition() {
+const minX = 24;
+const maxX = puzzleWrap.clientWidth - PIECE_SIZE - 24;
+return Math.floor(Math.random() * (maxX - minX + 1)) + minX;
+}
+// 加载背景图片
+function loadPuzzleBgImage() {
+puzzleBgImg.src = `https://picsum.photos/id/${Math.floor(Math.random() * 1000)}/320/180`;
+}
+// 重置拼图弹窗内拼图【重置时恢复回弹过渡】
+function resetSlidePuzzle() {
+const path = generateRandomJigsawPath();
+targetLeft = getTargetPosition();
+gapPathEl.setAttribute("d", path);
+dragPathEl.setAttribute("d", path);
+puzzleGap.style.left = targetLeft + "px";
+puzzleBlock.style.backgroundImage = `url(${puzzleBgImg.src})`;
+puzzleBlock.style.backgroundPosition = `-${targetLeft}px -68px`;
+puzzleSliderProgress.style.width = "46px";
+// 重置回弹：开启过渡动画
+puzzleBlock.style.transition = "left 0.18s ease";
+puzzleSliderBtn.style.transition = "left 0.18s ease";
+puzzleSliderProgress.style.transition = "width 0.18s ease";
+
+puzzleBlock.style.left = "0px";
+puzzleSliderBtn.style.left = "0px";
+slideTip.className = "slide-tip";
+slideTip.textContent = "请拖动滑块完成验证";
+slideVerified = false;
+isDrag = false;
+puzzleSliderBar.classList.remove("dragging");
+}
+// 获取滑块最大可移动距离
+function getSlideMaxLeft() {
+return puzzleSliderBar.clientWidth - puzzleSliderBtn.clientWidth;
 }
 // ==========【输入校验逻辑】==========
 hiddenInput.addEventListener('input',(e)=>{
@@ -660,7 +821,6 @@ hiddenInput.setSelectionRange(val.length, val.length);
 codeArr = ["","","",""];
 for(let i=0; i<val.length; i++){
 codeArr[i] = val[i];
-triggerFlash(i);
     }
 pos = val.length;
 renderCode();
@@ -734,7 +894,7 @@ boxes.forEach(b=>{
 b.style.transform = "";
 b.style.color = "rgba(34,34,34,1)";
 b.style.opacity = "1";
-b.style.borderWidth = "1px"; //恢复默认1px细边框
+b.style.borderWidth = "1.5px"; //恢复默认1.5px边框
 b.classList.remove('hidden');
 b.classList.remove('success-border'); //新增：移除成功绿色边框
 let oldLight = b.querySelector('.item-light-border');
@@ -749,6 +909,7 @@ resendBtn.style.opacity = "1";
 hiddenInput.addEventListener("focus", ()=>{
 setTimeout(()=>{
 hiddenInput.setSelectionRange(hiddenInput.value.length, hiddenInput.value.length);
+renderCode();
     },0)
 })
 //退格处理
@@ -757,7 +918,6 @@ if(e.key === 'Backspace'){
 if(pos>0){
 pos--;
 codeArr[pos] = "";
-triggerFlash(pos);
 renderCode();
 if(hiddenInput.matches(':focus') && pos<4){
 boxes[pos].classList.add("active");
@@ -780,18 +940,15 @@ modalMask.classList.add("show");
 function closeModal(){
 modalMask.classList.remove("show");
         }
-//打开滑块弹窗
+//打开拼图滑块弹窗
 function openSlideModal(){
-slideVerified = false;
-slideBtn.style.left = "0px";
-slideProgress.style.width = "0%";
-slideTip.textContent = "请拖动滑块完成验证";
-slideTip.style.color="#666";
-slideBtn.style.background="#fff";
 slideModalMask.classList.add("show");
-setTimeout(()=>{
-maxW = slideBox.clientWidth - slideBtn.offsetWidth;
-},10)
+bgLoaded = false;
+loadPuzzleBgImage();
+puzzleBgImg.onload = ()=>{
+bgLoaded = true;
+resetSlidePuzzle();
+};
 }
 function closeSlideModal(){
 slideModalMask.classList.remove("show");
@@ -856,76 +1013,63 @@ renderCode();
 backBtn.addEventListener('click',()=>{
 location.href = "../手机号输入页/手机号输入页.html";
 })
-// ========== 滑块拖拽逻辑 ==========
-slideBtn.addEventListener('mousedown',(e)=>{
+
+// ===================== 拼图拖拽逻辑【修复同步】 =====================
+puzzleSliderBtn.addEventListener('mousedown',startDragSlide);
+puzzleSliderBtn.addEventListener('touchstart',startDragSlide);
+function startDragSlide(e){
 isDrag = true;
+slideTip.textContent = "";
+puzzleSliderBar.classList.add("dragging");
 e.preventDefault();
-})
-document.addEventListener('mousemove',(e)=>{
-if(!isDrag) return;
-const rect = slideBox.getBoundingClientRect();
-let x = e.clientX - rect.left - slideBtn.offsetWidth/2;
-if(x <0) x=0;
-if(x>maxW) x = maxW;
-slideBtn.style.left = x + "px";
-let percent = (x/maxW)*100;
-slideProgress.style.width = percent+"%";
-})
-document.addEventListener('mouseup',()=>{
-if(!isDrag) return;
+}
+document.addEventListener("mousemove", onSlideDrag);
+document.addEventListener("touchmove", onSlideDrag, { passive: false });
+function onSlideDrag(e){
+if (!isDrag) return;
+e.preventDefault();
+const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+const rect = puzzleSliderBar.getBoundingClientRect();
+let moveX = clientX - rect.left - puzzleSliderBtn.clientWidth / 2;
+const maxLeft = getSlideMaxLeft();
+if (moveX < 0) moveX = 0;
+if (moveX > maxLeft) moveX = maxLeft;
+
+//拖拽移动时强制关闭过渡，三者完全同步
+puzzleBlock.style.transition = "none";
+puzzleSliderBtn.style.transition = "none";
+puzzleSliderProgress.style.transition = "none";
+
+// 更新滑块按钮位置
+puzzleSliderBtn.style.left = `${moveX}px`;
+// 更新拼图块位置
+puzzleBlock.style.left = `${moveX}px`;
+// 进度条右边缘对齐圆形滑块右边缘 moveX + 46px
+puzzleSliderProgress.style.width = `${moveX + 46}px`;
+}
+document.addEventListener("mouseup", endSlideDrag);
+document.addEventListener("touchend", endSlideDrag);
+function endSlideDrag() {
+if (!isDrag) return;
 isDrag = false;
-const leftVal = parseInt(slideBtn.style.left);
-if(leftVal >= maxW*0.9){
+puzzleSliderBar.classList.remove("dragging");
+const currentX = parseFloat(puzzleSliderBtn.style.left) || 0;
+if (Math.abs(currentX - targetLeft) <= TOLERANCE) {
 slideVerified = true;
-slideTip.textContent = "验证成功";
-slideTip.style.color="#00c48c";
-slideBtn.style.background="#00c48c";
-setTimeout(()=>{
+slideTip.className = "slide-tip slide-success";
+slideTip.textContent = "✅ 验证成功";
+setTimeout(() => {
 closeSlideModal();
 doSendCode();
-},600)
-}else{
-slideBtn.style.left = "0px";
-slideProgress.style.width = "0%";
-slideTip.textContent = "验证失败，请重试";
-slideTip.style.color="#f56c6c";
+},600);
+} else {
+slideTip.className = "slide-tip slide-error";
+slideTip.textContent = "❌ 验证失败，请重试";
+setTimeout(() => {
+resetSlidePuzzle();
+},1200);
 }
-})
-//移动端触摸
-slideBtn.addEventListener('touchstart',(e)=>{
-isDrag = true;
-})
-document.addEventListener('touchmove',(e)=>{
-if(!isDrag) return;
-e.preventDefault();
-const rect = slideBox.getBoundingClientRect();
-let x = e.touches[0].clientX - rect.left - slideBtn.offsetWidth/2;
-if(x <0) x=0;
-if(x>maxW) x = maxW;
-slideBtn.style.left = x + "px";
-let percent = (x/maxW)*100;
-slideProgress.style.width = percent+"%";
-},{passive:false})
-document.addEventListener('touchend',()=>{
-if(!isDrag) return;
-isDrag = false;
-const leftVal = parseInt(slideBtn.style.left);
-if(leftVal >= maxW*0.9){
-slideVerified = true;
-slideTip.textContent = "验证成功";
-slideTip.style.color="#00c48c";
-slideBtn.style.background="#00c48c";
-setTimeout(()=>{
-closeSlideModal();
-doSendCode();
-},600)
-}else{
-slideBtn.style.left = "0px";
-slideProgress.style.width = "0%";
-slideTip.textContent = "验证失败，请重试";
-slideTip.style.color="#f56c6c";
 }
-})
 //执行发送验证码逻辑
 function doSendCode(){
 const lockStatus = checkIsLocked();
