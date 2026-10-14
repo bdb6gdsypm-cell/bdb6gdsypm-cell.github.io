@@ -13,16 +13,16 @@ font-family: system-ui, -apple-system, BlinkMacSystemFont, "PingFang SC", sans-s
         }
 html, body {
 height: 100%;
-background-color: #cccccc;
+/* 垂直渐变，顶部粉色，底部浅灰白，和截图一致 */
+background: linear-gradient(180deg, #fcd7e1 0%, #f4f4f4 100%);
 overflow: hidden;
-        }
+}
 body {
 display: flex;
 flex-direction: column;
-        }
+}
 /* 顶部返回 */
 .top-bar {
-background-color: #cccccc;
 padding: 40px 20px 10px;
         }
 .back-btn {
@@ -46,26 +46,30 @@ flex: 1;
 display: flex;
 align-items: flex-start;
 justify-content: center;
-background-color: #cccccc;
 padding: 0 24px;
 margin-top: -4px;
         }
 .verify-card {
 width: 100%;
 max-width: 420px;
-background: #cccccc;
 padding: 18px 24px;
 position: relative;
         }
+.white-card-wrap {
+background: rgba(255,255,255,0.88);
+border-radius: 24px;
+padding: 32px 24px;
+box-shadow: 0 8px 24px rgba(0,0,0,0.06);
+}
 .title-text {
 font-size: 34px;
 font-weight: 500;
-color: #ffffff;
+color: #222;
 margin-bottom: 8px;
         }
 .tip-text {
 font-size: clamp(14px,4vw,18px);
-color: #ffffff;
+color: #555;
 opacity: 0.85;
 margin-bottom: 28px;
 white-space: nowrap;
@@ -94,7 +98,7 @@ flex: 1;
 max-width: 72px;
 aspect-ratio: 1 / 1;
 background: #ffffff;
-border: 3px solid #fff;
+border: 1px solid #d8d8d8a1;
 border-radius: 12px;
 display: flex;
 align-items: center;
@@ -104,51 +108,40 @@ font-weight: 600;
 color: #222;
 position: relative;
 cursor: pointer;
-transition: transform 0.5s ease, opacity 0.4s ease, border-color 0.3s ease;
+transition: transform 0.5s ease, opacity 0.4s ease, border-color 0.3s ease, border-width 0.3s ease;
 overflow: hidden;
-        }
-/* 单个输入框独立流星跑马灯：仅边框线条显示流星，内部完全不显示 */
+}
 
+.code-item.success-border {
+border: 2px solid #00c48c !important;
+}
+/* 环形流星跑马灯，沿矩形边框顺时针流转 */
+@property --angle {
+syntax: '<angle>';
+initial-value: 0deg;
+inherits: false;
+}
 .code-item .item-light-border {
 position: absolute;
 inset: 0;
-border-radius: 12px; /* 和.code-item圆角保持一致！ */
+border-radius: 12px;
 pointer-events: none;
 z-index: 5;
-background: conic-gradient(from 0deg, transparent 0deg, #ff78a1 0deg, #ffb8d2 15deg, #ff78a1 30deg, transparent 30deg);
-animation: itemLightRotate 0.5s linear 2;
-
-mask-image:
-  linear-gradient(#000 0 0),
-  linear-gradient(#000 0 0);
-mask-clip: border-box, border-box;
-mask-composite: exclude;
-mask-size: 100% 100%, calc(100% - 4px) calc(100% - 4px);
-mask-position: center, center;
-mask-repeat: no-repeat;
-mask-border-radius: 12px; /* 内层挖空圆角，和外层一致 */
-
--webkit-mask-image:
-  linear-gradient(#000 0 0),
-  linear-gradient(#000 0 0);
--webkit-mask-clip: border-box, border-box;
+padding:2px;
+background: conic-gradient(from var(--angle), transparent 0deg, #ff78a1 0deg, #ffb8d2 20deg, transparent 40deg);
+-webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
 -webkit-mask-composite: xor;
--webkit-mask-size: 100% 100%, calc(100% - 4px) calc(100% - 4px);
--webkit-mask-position: center, center;
--webkit-mask-repeat: no-repeat;
--webkit-mask-border-radius: 12px;
+mask-composite: exclude;
+animation: borderCircleFlow 1s linear 1;
 }
-
-
-
-
-@keyframes itemLightRotate {
-0% {
-transform: rotate(0deg);
-}
-100% {
-transform: rotate(360deg);
-}
+@keyframes borderCircleFlow {
+from {
+--angle: 0deg;
+  }
+to {
+--angle: 360deg;
+  }
 }
 .code-item.flash {
 animation: flashPink 0.7s ease-out;
@@ -185,17 +178,16 @@ animation: blink 1s infinite;
 0%, 100% { opacity: 1; }
 50% { opacity: 0; }
         }
-/* 成功状态 */
+/* 成功状态【修改：去掉圆形边框、圆角】 */
 .success-wrap{
 position:absolute;
 left:50%;
 top:50%;
 transform: translate(-50%,-50%);
-width:72px;
-height:72px;
-border-radius:50%;
-background:#00c48c;
-border: 4px solid #fff;
+width:auto;
+height:auto;
+background:transparent;
+/* 删除 border 和 border-radius */
 display:flex;
 align-items:center;
 justify-content:center;
@@ -204,8 +196,8 @@ transition: opacity 0.45s ease;
 z-index: 10;
 }
 .success-check{
-color:#fff;
-font-size:40px;
+color:#00c48c;
+font-size:48px;
 font-weight:bold;
 opacity:0;
 transition: opacity 0.4s ease 0.25s;
@@ -228,14 +220,16 @@ padding: 18px;
 border-radius: 999px;
 border: none;
 font-size: 20px;
-color: #aaaaaa;
-background: #ffffff;
+color: #fff;
+background: #f788a8;
 cursor: pointer;
 transition: opacity 0.4s ease;
+box-shadow: 0 4px 12px rgba(247,136,168,0.3);
         }
 .resend-btn:disabled {
 opacity: 0.7;
 cursor: not-allowed;
+background: #f788a8;
         }
 /* 通用弹窗mask */
 .modal-mask {
@@ -386,6 +380,7 @@ display:flex;
 </div>
 <div class="verify-section">
 <div class="verify-card">
+<div class="white-card-wrap">
 <div class="title-text">输入验证码</div>
 <div class="tip-text" id="tipText"></div>
 <div class="code-box-container" id="codeContainer">
@@ -400,6 +395,7 @@ display:flex;
 <div class="success-text" id="successText"></div>
 </div>
 <button class="resend-btn" id="resendBtn">获取验证码</button>
+</div>
 </div>
 </div>
 <!-- 验证码弹窗（带确定按钮） -->
@@ -562,39 +558,79 @@ hiddenInput.focus();
 if(pos<4) boxes[pos].classList.add("active");
     })
 })
-// ✅验证成功动画：四个输入框各自同时播放粉色流星跑马灯一圈 → 四框聚拢
+
+// ✅验证成功动画：流星一圈 → 流星+文字【同步一起平滑淡出】→ 四框聚拢倾斜 → 回正+绿边框 → 对勾弹出
 async function runSuccessAnimation(){
-// 【新增】验证码按钮渐隐
+// 验证码按钮渐隐
 resendBtn.style.opacity = "0";
 
-// 【改动】给每一个输入框单独创建流星边框，4个同时开始旋转
 boxes.forEach(box => {
-// 清理残留旧流星元素
-let oldLight = box.querySelector('.item-light-border');
-if(oldLight) oldLight.remove();
-let lightBorder = document.createElement('div');
-lightBorder.className = 'item-light-border';
-box.appendChild(lightBorder);
+  // 清理旧流星
+  let oldLight = box.querySelector('.item-light-border');
+  if(oldLight) oldLight.remove();
+
+  // 创建流星
+  let lightBorder = document.createElement('div');
+  lightBorder.className = 'item-light-border';
+  lightBorder.style.transition = 'opacity 0.35s ease';
+  lightBorder.style.opacity = '1';
+  box.appendChild(lightBorder);
+
+  // 文字颜色增加过渡，只控制文字透明度，盒子背景保持白色不变
+  box.style.transition = 'transform 0.5s ease, border-color 0.3s ease, color 0.35s ease';
+  box.style.color = 'rgba(34,34,34,1)';
 });
+
 await sleep(900);
-// 2. 四个输入框向中心点聚拢（只做一次位移，之后位置固定不动）
+
+// =========【核心改动：流星 和 数字文字 同步一起淡出】=========
+boxes.forEach(box => {
+  //流星淡出
+  let light = box.querySelector('.item-light-border');
+  if(light) {
+    light.style.opacity = '0';
+  }
+  //文字颜色透明度降到0，白底盒子保留不变
+  box.style.color = 'rgba(34,34,34,0)';
+});
+await sleep(350); //等待两者淡出动画结束
+
+//流星DOM清理
+boxes.forEach(box => {
+  let light = box.querySelector('.item-light-border');
+  if(light) light.remove();
+});
+// =========================================================
+
+// 阶段1：聚拢 + 倾斜（0.5s过渡）
 codeContainer.style.gap = "0px";
+boxes.forEach((box, idx) => {
+  const centerIndex = 1.5;
+  const offset = (centerIndex - idx) * 72;
+  let rotateDeg = 0;
+  if(idx === 0 || idx === 1){
+    rotateDeg = 20;
+  }else if(idx === 2 || idx === 3){
+    rotateDeg = -20;
+  }
+  box.style.transform = `translateX(${offset}px) scale(0.85) rotate(${rotateDeg}deg)`;
+});
+await sleep(500);
+
+// 阶段2：旋转回正，添加绿色成功边框
 boxes.forEach((box, idx) => {
 const centerIndex = 1.5;
 const offset = (centerIndex - idx) * 72;
-box.style.transform = `translateX(${offset}px) scale(0.85)`;
-box.style.opacity = "1";
-    });
-await sleep(500);
-// 3. 保持聚拢位置不变，仅透明度淡出
-boxes.forEach(box => {
-box.style.opacity = "0";
-    });
-await sleep(400);
-// 4. 绿色圆形对勾渐显
+box.style.transform = `translateX(${offset}px) scale(0.85) rotate(0deg)`;
+box.style.borderWidth = "2px";
+box.classList.add("success-border");
+});
+
+await sleep(300);
+
+// 绿色对勾、提示文字渐显
 successCircle.style.opacity = "1";
 successCheck.style.opacity = "1";
-// 绿勾出现后，绿色欢迎文字渐显 ${phone}
 successText.textContent = `欢迎回来`;
 successText.style.color = "#00c48c";
 successText.style.backgroundColor = "#ffffff";
@@ -602,11 +638,15 @@ successText.style.padding = "4px 14px";
 successText.style.borderRadius = "999px";
 successText.style.opacity = "1";
 successText.style.width = "auto";
-
 await sleep(1200);
-// 5. 跳转
+
+// 跳转
 location.href = "../常用项选择/常用项选择.html";
 }
+
+
+
+
 function sleep(ms){
 return new Promise(resolve=>setTimeout(resolve,ms));
 }
@@ -692,8 +732,11 @@ renderCode();
 codeContainer.style.gap = "16px";
 boxes.forEach(b=>{
 b.style.transform = "";
+b.style.color = "rgba(34,34,34,1)";
 b.style.opacity = "1";
+b.style.borderWidth = "1px"; //恢复默认1px细边框
 b.classList.remove('hidden');
+b.classList.remove('success-border'); //新增：移除成功绿色边框
 let oldLight = b.querySelector('.item-light-border');
 if(oldLight) oldLight.remove();
 });
