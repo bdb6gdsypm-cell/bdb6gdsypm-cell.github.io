@@ -5,6 +5,20 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 <title>输入验证码</title>
 <style>
+/* 新增：根节点rem响应式，屏幕宽度动态设置字体基准，实现整体缩放 */
+html {
+  font-size: 100%;
+}
+@media screen and (max-width: 480px) {
+  html {
+    font-size: calc(100vw / 375 * 16);
+  }
+}
+@media screen and (min-width: 481px) {
+  html {
+    font-size: 16px;
+  }
+}
 * {
 margin: 0;
 padding: 0;
@@ -23,11 +37,11 @@ flex-direction: column;
 }
 /* 顶部返回 */
 .top-bar {
-padding: 40px 20px 10px;
+padding: 2.5rem 1.25rem 0.625rem;
         }
 .back-btn {
-width: 36px;
-height: 36px;
+width: 2.25rem;
+height: 2.25rem;
 border-radius: 50%;
 background: #ffffff;
 display: flex;
@@ -36,8 +50,8 @@ justify-content: center;
 cursor: pointer;
         }
 .back-btn svg {
-width: 18px;
-height: 18px;
+width: 1.125rem;
+height: 1.125rem;
 fill: #666666;
         }
 /* 中间验证码区域 */
@@ -46,40 +60,40 @@ flex: 1;
 display: flex;
 align-items: flex-start;
 justify-content: center;
-padding: 0 24px;
-margin-top: -4px;
+padding: 0 1.5rem;
+margin-top: -0.25rem;
         }
 .verify-card {
 width: 100%;
-max-width: 420px;
-padding: 18px 24px;
+max-width: 26.25rem;
+padding: 1.125rem 1.5rem;
 position: relative;
         }
 .white-card-wrap {
 background: rgba(255, 255, 255, 0.607);
-border-radius: 24px;
-padding: 32px 24px;
-box-shadow: 0 8px 24px rgba(0,0,0,0.06);
+border-radius: 1.5rem;
+padding: 2rem 1.5rem;
+box-shadow: 0 0.5rem 1.5rem rgba(0,0,0,0.06);
 }
 .title-text {
-font-size: 34px;
+font-size: clamp(2rem, 8vw, 2.125rem);
 font-weight: 500;
 color: #222;
-margin-bottom: 8px;
+margin-bottom: 0.5rem;
         }
 .tip-text {
-font-size: clamp(14px,4vw,18px);
+font-size: clamp(0.875rem,4vw,1.125rem);
 color: #555;
 opacity: 0.85;
-margin-bottom: 28px;
+margin-bottom: 1.75rem;
 white-space: nowrap;
 overflow: hidden;
 }
 /* 验证码输入框容器：增加will-change修复聚拢卡顿 */
 .code-box-container {
 display: flex;
-gap: 16px;
-margin-bottom: 28px;
+gap: 1rem;
+margin-bottom: 1.75rem;
 position: relative;
 justify-content: center;
 transition: gap 0.5s ease;
@@ -89,22 +103,22 @@ will-change: transform;
 position:absolute;
 left:-9999px;
 top:0;
-width:120px;
-height:44px;
+width:7.5rem;
+height:2.75rem;
 z-index:-1;
 }
 .code-item {
 flex: 1;
-max-width: 72px;
-min-width: 52px;
+max-width: 4.5rem;
+min-width: 3.25rem;
 aspect-ratio: 1 / 1;
 background: #ffffff;
 border: 1.5px solid #c8b9a8;
-border-radius: 12px;
+border-radius: 0.75rem;
 display: flex;
 align-items: center;
 justify-content: center;
-font-size: 32px;
+font-size: clamp(1.75rem,7vw,2rem);
 font-weight: 600;
 color: #222;
 position: relative;
@@ -128,7 +142,7 @@ inherits: false;
 .code-item .item-light-border {
 position: absolute;
 inset: 0;
-border-radius: 12px;
+border-radius: 0.75rem;
 pointer-events: none;
 z-index: 5;
 padding:2px;
@@ -145,8 +159,8 @@ content:"";
 position:absolute;
 /* 放到流星头部（20度位置） */
 --dot-angle: calc(var(--angle) + 20deg);
-width:10px;
-height:10px;
+width:0.625rem;
+height:0.625rem;
 background: radial-gradient(circle, #ffb8d2 0%, rgba(255,120,161,0) 70%);
 border-radius:50%;
 /* 让圆点沿着盒子外圈旋转 */
@@ -193,7 +207,7 @@ pointer-events: none;
 content: "";
 position: absolute;
 width: 2px;
-height: 32px;
+height: 2rem;
 background: #999;
 animation: blink 1s infinite;
         }
@@ -220,17 +234,17 @@ z-index: 10;
 }
 .success-check{
 color:#00c48c;
-font-size:48px;
+font-size: clamp(2.5rem, 10vw,3rem);
 font-weight:bold;
 opacity:0;
 transition: opacity 0.4s ease 0.25s;
 }
 .success-text{
 position:absolute;
-top:110px;
+top: 6.875rem;
 left:50%;
 transform:translateX(-50%);
-font-size:22px;
+font-size: clamp(1.125rem,4vw,1.375rem);
 color:#ff78a1;
 white-space:nowrap;
 opacity:0;
@@ -239,15 +253,15 @@ transition: opacity 0.4s ease 0.45s;
 /* 重新获取按钮 */
 .resend-btn {
 width: 100%;
-padding: 18px;
+padding: 1.125rem;
 border-radius: 999px;
 border: none;
-font-size: 20px;
+font-size: clamp(1rem,4vw,1.25rem);
 color: #fff;
 background: #f788a8;
 cursor: pointer;
 transition: opacity 0.4s ease;
-box-shadow: 0 4px 12px rgba(247,136,168,0.3);
+box-shadow: 0 0.25rem 0.75rem rgba(247,136,168,0.3);
         }
 .resend-btn:disabled {
 opacity: 0.7;
@@ -266,32 +280,34 @@ z-index: 200;
 display: none;
 align-items: center;
 justify-content: center;
+padding: 0 1rem;
         }
 .modal-wrap {
-width: 280px;
+width: 100%;
+max-width: 17.5rem;
 background: #fff;
-border-radius: 12px;
+border-radius: 0.75rem;
 overflow: hidden;
         }
 .modal-body {
-padding:24px 20px;
+padding:1.5rem 1.25rem;
 text-align: center;
         }
 .modal-title {
-font-size:17px;
+font-size:1.0625rem;
 color:#333;
-margin-bottom:12px;
+margin-bottom:0.75rem;
         }
 .modal-code-text {
-font-size:32px;
-letter-spacing:8px;
+font-size: clamp(1.75rem, 8vw,2rem);
+letter-spacing:0.5rem;
 font-weight:bold;
 color:#222;
         }
 .modal-tip-text {
-font-size:16px;
+font-size:1rem;
 color:#ff78a1;
-margin-top:10px;
+margin-top:0.625rem;
 }
 .modal-footer {
 border-top:1px solid #eee;
@@ -300,42 +316,43 @@ border-top:1px solid #eee;
 width:100%;
 border:none;
 background:#fff;
-font-size:17px;
+font-size:1.0625rem;
 color:#007aff;
-padding:14px 0;
+padding:0.875rem 0;
 cursor:pointer;
         }
 .modal-mask.show{
 display:flex;
         }
-/* ========= 拼图滑块验证弹窗【修复：拖拽拼块同步】 ========= */
+/* ========= 拼图滑块验证弹窗【修复：拖拽拼块同步 + 响应式宽度】 ========= */
 .slide-modal-wrap{
-width:320px;
+width:100%;
+max-width: 20rem;
 background:#fff;
-border-radius:12px;
+border-radius:0.75rem;
 overflow:hidden;
 }
 .slide-modal-body{
-padding:20px 20px 24px;
+padding:1.25rem 1.25rem 1.5rem;
 }
 .slide-title{
 text-align:center;
-font-size:18px;
+font-size:1.125rem;
 color:#222;
-margin-bottom:16px;
+margin-bottom:1rem;
 }
 /* 拼图画布容器 */
 .puzzle-wrap{
 width:100%;
-height:180px;
+aspect-ratio:320/180;
 position:relative;
-border-radius:8px;
+border-radius:0.5rem;
 overflow:hidden;
 }
 /* 背景图片 */
 .puzzle-bg-img{
-width:320px;
-height:180px;
+width:100%;
+height:100%;
 object-fit:cover;
 position:absolute;
 top:0;
@@ -344,15 +361,15 @@ left:0;
 /* 缺口 */
 .puzzle-gap{
 position:absolute;
-top: 68px;
-width: 54px;
-height: 54px;
-filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.55)) drop-shadow(0 -2px 4px rgba(255, 255, 255, 0.25));
+top: 37.7%;
+width: 16.875%;
+aspect-ratio:1/1;
+filter: drop-shadow(0 0.25rem 0.625rem rgba(0, 0, 0, 0.55)) drop-shadow(0 -0.125rem 0.25rem rgba(255, 255, 255, 0.25));
 pointer-events:none;
 }
 .puzzle-gap svg{
-width:54px;
-height:54px;
+width:100%;
+height:100%;
 overflow:visible;
 }
 .gap-path {
@@ -361,12 +378,12 @@ fill: rgba(0, 0, 0, 0.38);
 /* 拖拽拼块 【移除默认transition】 */
 .puzzle-block{
 position:absolute;
-top: 68px;
+top: 37.7%;
 left:0px;
-width: 54px;
-height: 54px;
-box-shadow: 0 6px 14px rgba(0, 0, 0, 0.6);
-background-size: 320px 180px;
+width: 16.875%;
+aspect-ratio:1/1;
+box-shadow: 0 0.375rem 0.875rem rgba(0, 0, 0, 0.6);
+background-size: 100% 100%;
 background-repeat: no-repeat;
 clip-path: url(#dragClip);
 outline: 2px solid #ffffff;
@@ -378,11 +395,11 @@ position:absolute;width:0;height:0;
 }
 /* 底部拖动条 */
 .puzzle-slider-bar{
-margin-top:14px;
+margin-top:0.875rem;
 width:100%;
-height:46px;
+height:2.875rem;
 background:#F8E5EB;
-border-radius:24px;
+border-radius:1.5rem;
 position:relative;
 overflow:hidden;
 touch-action:none;
@@ -393,16 +410,16 @@ left:0;
 top:0;
 height:100%;
 background: linear-gradient(90deg, #F7C9D7, #F2A6BE);
-border-radius:24px;
+border-radius:1.5rem;
 width:0px;
 }
 .puzzle-slider-btn{
-width:46px;
-height:46px;
+width:2.875rem;
+height:2.875rem;
 border-radius:50%;
 background:#E888A6;
 color:#fff;
-box-shadow:0 4px 12px rgba(232, 136, 166, 0.45);
+box-shadow:0 0.25rem 0.75rem rgba(232, 136, 166, 0.45);
 position:absolute;
 top:0;
 left:0px;
@@ -426,9 +443,9 @@ transition:none;
 }
 .slide-tip{
 text-align:center;
-margin-top:12px;
-font-size:14px;
-min-height:20px;
+margin-top:0.75rem;
+font-size:0.875rem;
+min-height:1.25rem;
 }
 .slide-success{ color: #38B075; }
 .slide-error{ color: #E25C78; }
@@ -444,13 +461,14 @@ display: none;
 align-items: center;
 justify-content: center;
 pointer-events: none;
+padding:0 1rem;
 }
 .toast-box {
 background:rgba(0,0,0,0.65);
 color:#fff;
-padding:16px 28px;
-border-radius:12px;
-font-size:18px;
+padding:1rem 1.75rem;
+border-radius:0.75rem;
+font-size:1.125rem;
 animation:toastFade 0.3s ease;
 }
 @keyframes toastFade{
@@ -503,7 +521,7 @@ display:flex;
 </div>
 </div>
 </div>
-<!-- 【新版拼图滑块人机验证弹窗｜修复拖拽同步】 -->
+<!-- 【新版拼图滑块人机验证弹窗｜修复拖拽同步 + 响应式】 -->
 <div class="modal-mask" id="slideModalMask">
 <div class="slide-modal-wrap">
 <div class="slide-modal-body">
@@ -780,8 +798,9 @@ return d;
 }
 // 获取缺口目标X坐标
 function getTargetPosition() {
+const wrapW = puzzleWrap.clientWidth;
 const minX = 24;
-const maxX = puzzleWrap.clientWidth - PIECE_SIZE - 24;
+const maxX = wrapW - PIECE_SIZE - 24;
 return Math.floor(Math.random() * (maxX - minX + 1)) + minX;
 }
 // 加载背景图片
