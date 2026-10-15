@@ -96,6 +96,7 @@ z-index:-1;
 .code-item {
 flex: 1;
 max-width: 72px;
+min-width: 52px;
 aspect-ratio: 1 / 1;
 background: #ffffff;
 border: 1.5px solid #c8b9a8;
@@ -710,11 +711,13 @@ let light = box.querySelector('.item-light-border');
 if(light) light.remove();
 });
 // =========================================================
-// 阶段1：聚拢 + 倾斜（0.5s过渡）
+// 阶段1：聚拢 + 倾斜【动态读取盒子真实宽度，修复小屏幕聚拢过度bug】
 codeContainer.style.gap = "0px";
-boxes.forEach((box, idx) => {
+// 获取单个验证码盒子真实宽度（响应式，不再写死72px）
+const boxW = boxes[0].offsetWidth;
 const centerIndex = 1.5;
-const offset = (centerIndex - idx) * 72;
+boxes.forEach((box, idx) => {
+const offset = (centerIndex - idx) * boxW;
 let rotateDeg = 0;
 if(idx === 0 || idx === 1){
 rotateDeg = 20;
@@ -726,8 +729,9 @@ box.style.transform = `translateX(${offset}px) scale(0.85) rotate(${rotateDeg}de
 await sleep(500);
 // 阶段2：旋转回正，添加绿色成功边框
 boxes.forEach((box, idx) => {
+const boxW = boxes[0].offsetWidth;
 const centerIndex = 1.5;
-const offset = (centerIndex - idx) * 72;
+const offset = (centerIndex - idx) * boxW;
 box.style.transform = `translateX(${offset}px) scale(0.85) rotate(0deg)`;
 box.style.borderWidth = "2px";
 box.classList.add("success-border");
@@ -798,7 +802,6 @@ puzzleSliderProgress.style.width = "46px";
 puzzleBlock.style.transition = "left 0.18s ease";
 puzzleSliderBtn.style.transition = "left 0.18s ease";
 puzzleSliderProgress.style.transition = "width 0.18s ease";
-
 puzzleBlock.style.left = "0px";
 puzzleSliderBtn.style.left = "0px";
 slideTip.className = "slide-tip";
@@ -1013,7 +1016,6 @@ renderCode();
 backBtn.addEventListener('click',()=>{
 location.href = "../手机号输入页/手机号输入页.html";
 })
-
 // ===================== 拼图拖拽逻辑【修复同步】 =====================
 puzzleSliderBtn.addEventListener('mousedown',startDragSlide);
 puzzleSliderBtn.addEventListener('touchstart',startDragSlide);
@@ -1034,12 +1036,10 @@ let moveX = clientX - rect.left - puzzleSliderBtn.clientWidth / 2;
 const maxLeft = getSlideMaxLeft();
 if (moveX < 0) moveX = 0;
 if (moveX > maxLeft) moveX = maxLeft;
-
 //拖拽移动时强制关闭过渡，三者完全同步
 puzzleBlock.style.transition = "none";
 puzzleSliderBtn.style.transition = "none";
 puzzleSliderProgress.style.transition = "none";
-
 // 更新滑块按钮位置
 puzzleSliderBtn.style.left = `${moveX}px`;
 // 更新拼图块位置
